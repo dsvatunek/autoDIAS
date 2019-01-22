@@ -1,0 +1,113 @@
+# Example input
+
+# relative or absolute path to file with structures. Can be xyz file or G09 output from IRC or geometry opt calculation
+Input file = test.xyz
+
+# Job name can be defined
+Job name = test
+
+#--------------------------------------------------
+Information on Structures
+#--------------------------------------------------
+
+# Charge and multiplicity of the whole system. Needs to be set for xyz files. Optional for G09 input, remove line or leave blank. 
+charge = 0
+multiplicity = 1
+
+# Fragment information
+# Provide fragment atoms as space or comma separated list of atom numbers
+# set either Fragment1 or Fragment2 atom list to auto or leave blank if the second fragment atoms should be determined automatically
+# set both fragment atom lists to auto or leave blank to attempt automatic fragment detection
+
+Fragment1 name = Fragment1
+Fragment1 charge = 0
+Fragment1 multiplicity = 1
+Fragment1 atoms = 26 27 28 29 30 31 32 33 34 35
+Fragment1 energy = -243.485731
+
+Fragment2 name = Fragment2
+Fragment2 charge = 0
+Fragment2 multiplicity = 1
+Fragment2 atoms = 
+Fragment2 energy = -464.752500
+
+
+#--------------------------------------------------
+Information for Analysis
+#--------------------------------------------------
+
+# Analysis does only work if Gaussian is used
+
+# Analysis can be turned on (YES) or off (NO), default is YES
+Analysis = YES
+
+# Distances can be extracted. Use atom numbers to define distances. Use one line per atom pair
+# write "auto" in line to attempt finding two bonds that get formed or broken.
+<distances>
+2 26
+1 28
+</distances>
+
+# Angles can be extracted. Use atom numbers to define angles. Use one line per angle
+<angles>
+26 27 28
+</angles>
+
+# Dihedral angles can be extracted. Use atom numbers to define angles. Use one line per angle
+<angles>
+26 27 28 29
+</angles>
+
+#--------------------------------------------------
+Further Settings
+#--------------------------------------------------
+
+Keep xyz = YES
+Keep input files = YES
+Keep output files = YES
+Keep log file = YES
+
+#Prevents reordering of IRC structures
+No reorder = NO
+
+#Eliminate very similar structures based on a certain RMSD treshold
+Reduce structures = NO
+RMSD treshold = 0.2
+
+# Does only prepare input files but does not run them, no analysis either
+Prepare only = NO
+
+
+#--------------------------------------------------
+Input File Structure
+#--------------------------------------------------
+# Input file structure
+# please provide the settings for single point calculations
+# use $filename and $coordinates $charge and $multiplicity in places where they are required
+# Keep in mind the correct number of blank lines
+#Even though this block is called "Gaussian" other software can be used by posting the correct input structure and adjusting the system settings below
+
+<Gaussian>
+%mem=32GB
+%nprocshared=16
+# B3LYP/6-311+g(d,p) empiricaldispersion=gd3
+
+Title
+
+$coordinates
+
+
+</Gaussian>
+
+#--------------------------------------------------
+Input File Structure
+#--------------------------------------------------
+# please provide correct command to run the desired Software (e.g. Gaussian)
+# use $input and if needed $output for input and output file name
+
+<run_job>
+g09 $input $output
+</run_job>
+
+input file extension = com
+output file extension = log
