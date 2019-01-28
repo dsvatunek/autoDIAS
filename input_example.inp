@@ -42,7 +42,7 @@ Information for Analysis
 Analysis = YES
 
 # Distances can be extracted. Use atom numbers to define distances. Use one line per atom pair
-# write "auto" in line to attempt finding two bonds that get formed or broken.
+# write "auto" in line to attempt finding a total of two bonds that get formed or broken.
 <distances>
 2 26
 1 28
@@ -54,9 +54,9 @@ Analysis = YES
 </angles>
 
 # Dihedral angles can be extracted. Use atom numbers to define angles. Use one line per angle
-<angles>
+<dihedral>
 26 27 28 29
-</angles>
+</dihedral>
 
 #--------------------------------------------------
 Further Settings

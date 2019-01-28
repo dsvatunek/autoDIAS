@@ -2,10 +2,205 @@ class settings:
 	pass
 class structures:
 	pass
-	
+
 periodic_table = ["","H","He","Li","Be","B","C","N","O","F","Ne","Na","Mg","Al","Si","P","S","Cl","Ar","K","Ca","Sc","Ti","V","Cr","Mn","Fe","Co","Ni","Cu","Zn","Ga","Ge","As","Se","Br","Kr","Rb","Sr","Y","Zr",
     "Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn","Sb","Te","I","Xe","Cs","Ba","La","Ce","Pr","Nd","Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb","Lu","Hf","Ta","W","Re","Os","Ir","Pt","Au","Hg","Tl",
     "Pb","Bi","Po","At","Rn","Fr","Ra","Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md","No","Lr","Rf","Db","Sg","Bh","Hs","Mt","Ds","Rg","Uub","Uut","Uuq","Uup","Uuh","Uus","Uuo"]
+	
+#Covalent radii taken from DOI: 10.1039/b801115j
+#Everything beyond Cm was set to 1.80
+covalent_radii = [0.00,0.32,0.28,1.28,0.96,0.84,0.76,0.71,0.66,0.57,0.58,1.66,1.41,1.21,1.11,1.07,1.05,1.02,1.06,2.03,1.76,1.70,1.60,1.53,1.39,1.61,1.52,1.50,1.24,1.32,1.22,1.22,1.20,1.19,1.20,1.20,1.16,2.20,1.95,1.90,1.75,
+    1.64,1.54,1.47,1.46,1.42,1.39,1.45,1.44,1.42,1.39,1.39,1.38,1.39,1.40,2.44,2.15,2.07,2.04,2.03,2.01,1.99,1.98,1.98,1.96,1.94,1.92,1.92,1.89,1.90,1.87,1.87,1.75,1.70,1.62,1.51,1.44,1.41,1.36,1.36,1.32,1.45,
+    1.46,1.48,1.40,1.50,1.50,2.60,2.21,2.15,206,2.00,1.96,1.90,1.87,180,169,1.80,1.80,1.80,1.80,1.80,1.80,1.80,1.80,1.80,1.80,1.80,1.80,1.80,1.80,1.80,1.80,1.80,1.80,1.80,1.80,1.80,1.80]
+
+#takes xyz coordinates as numpy array and returns distance
+def getDistance(atom1, atom2):
+	distance = 0.00
+	distance = np.sqrt((atom1[0]-atom2[0])**2+(atom1[1]-atom2[1])**2+(atom1[2]-atom2[2])**2)
+	return distance
+	
+def molecular_formula(atoms):
+	alphabetic_periodic_table = sorted(copy.deepcopy(periodic_table))
+	formula = ""
+	count = []
+	for element in alphabetic_periodic_table:
+		count =  count + [atoms.count(element)]
+	if count[alphabetic_periodic_table.index("C")] > 1:
+		formula = formula + 'C' + str(count[alphabetic_periodic_table.index("C")])
+		count[alphabetic_periodic_table.index("C")] = 0
+	elif count[alphabetic_periodic_table.index("C")] > 0:
+		formula = formula + 'C'
+		count[alphabetic_periodic_table.index("C")] = 0
+	if count[alphabetic_periodic_table.index("H")] > 1:
+		formula = formula + 'H' + str(count[alphabetic_periodic_table.index("H")])
+		count[alphabetic_periodic_table.index("H")] = 0	
+	elif count[alphabetic_periodic_table.index("H")] > 0:
+		formula = formula + 'H'
+		count[alphabetic_periodic_table.index("H")] = 0
+	for x in range(0, len(alphabetic_periodic_table)):
+		if count[x] == 1:
+			formula = formula + alphabetic_periodic_table[x]
+		elif count[x] > 1:
+			formula = formula + alphabetic_periodic_table[x] + str(count[x])
+	return formula
+	
+	
+def getFragments(structure, atoms):
+	#get connectivity for each irc structure
+	adjacency_matrix = []
+	# iterate over every atom 
+	for i in range(0, len(structure)):
+		distances = []
+		#get the distance to every other atom and itself
+		for j in range(0, len(structure)):
+			distances = distances + [getDistance(structure[i], structure[j])]
+		adjacency_matrix = adjacency_matrix + [distances]
+
+	#convert distance to 1 for bond, 0 for no bond
+	for i in range(0, len(adjacency_matrix)):
+		for j in range(0, len(adjacency_matrix[i])):
+			if isBond(adjacency_matrix[i][j], atoms[i], atoms[j], covalent_radii):
+				adjacency_matrix[i][j] = 1
+			else:
+				adjacency_matrix[i][j] = 0
+	# now make a list of fragments 
+	#first convert each line to a list of the atoms in the structure which show a bond
+	for i in range(0, len(adjacency_matrix)):
+		adjacency_matrix[i] = [j+1 for j,x in enumerate(adjacency_matrix[i]) if x == 1]
+	#make empty fragments list
+	fragments = [adjacency_matrix[0]]
+	#now iterate over all the elements in adjacency_matrix
+	for i in range (1, len(adjacency_matrix)):
+		#now iterate over all the fragments in fragments and check if elements are the same
+		for j in range(0, len(fragments)):
+			#check if elements are already present in this list...
+			if len(set(adjacency_matrix[i]) & set(fragments[j])) > 0:
+				#....if they are add the lists together and eliminate duplicates...
+				fragments[j] = list(set(fragments[j]+adjacency_matrix[i]))
+				break
+		else:
+			#....add this list as new list in fragments
+			fragments = fragments + [adjacency_matrix[i]]
+	#now we got all of our fragments but some might belong to the same structure, so we need to test if we need to combine them, then combine them, 
+	#then check again and so on until nothing else changes, iterative process. Take length of fragments for that since it converged if amount of fragments doesn't changes
+	n_frag_old=len(fragments)
+	#set j to some value that cannot be the length of fragments
+	n_frag_new=-5
+	while n_frag_old != n_frag_new:
+		#set i to current value of len(fragments)
+		n_frag_old=len(fragments)
+		new_fragments = [sorted(fragments[0])]
+		#combine fragments like before
+		for i in range(0, len(fragments)):
+			for j in range(0, len(new_fragments)):
+				if len(set(fragments[i]) & set(new_fragments[j])) > 0:
+					new_fragments[j] = sorted(list(set(new_fragments[j]+fragments[i])))
+					break
+			else:
+				new_fragments = new_fragments + [fragments[i]]
+		fragments=new_fragments
+		n_frag_new=len(fragments)
+	return fragments	
+	
+def duplicates(int_list):
+	int_list = sorted(int_list)
+	duplicates = False
+	for i in range (0, len(int_list)-1):
+		if int_list[i] == int_list[i+1]:
+			duplicates = True
+		else:
+		   pass
+	return duplicates
+	
+def auto_frag(structures,settings):
+	list_of_fragments = []
+	for i in range(0, len(structures.xyz)):
+		list_of_fragments =  list_of_fragments + [getFragments(structures.xyz[i], atoms)]
+	n_fragments = []
+	for i in range(0,list_of_fragments):
+		n_fragments = n_fragments + [len(list_of_fragments[i])]
+	indices = [i for i, x in enumerate(n_fragments) if x == 2]
+	counts = [list_of_fragments.count(list_of_fragments[x]) for x in indices]
+	fragments = list_of_fragments[indices[counts.index(max(counts))]]
+	settings.frag1atoms = fragments[0]
+	settings.frag2atoms = fragments[1]
+	return settings
+ 
+ def get_single(file):
+ 	structures.atoms = []
+	structures.xyz = []
+	structures.title = []
+	with open(file) as input_file:
+	file_contents = input_file.read() 
+	if "Optimization completed." in file_contents:
+		regex = r'\ ---------------------------------------------------------------------\n((?:(?!\ ---------------------------------------------------------------------\n).)*?)\ ---------------------------------------------------------------------\n(?:(?!\ ---------------------------------------------------------------------\n).)*?Stationary\ point\ found'
+		for match in re.finditer(regex, file_contents, re.IGNORECASE|re.DOTALL):
+			raw_coordinates = match.group(1).strip().split("\n")
+			break
+	else:
+		regex = r'\ ---------------------------------------------------------------------\n((?:(?!\ ---------------------------------------------------------------------\n).)*?)\ ---------------------------------------------------------------------\n(?:(?!\ ---------------------------------------------------------------------\n).)*?Rotational\ constants'
+		for match in re.finditer(regex, file_contents, re.IGNORECASE|re.DOTALL):	
+			raw_coordinates = match.group(1).strip().split("\n")
+		
+	structures.xyz = [[x.split()[3:] for x in raw_coordinates]]
+	structures.atoms = [x.split()[1] for x in raw_coordinates]
+	structures.atoms = [periodic_table[int(x)] for x in atoms]
+	return structures
+ 
+  def get_scan(file):
+ 
+	return structures
+
+ def get_irc(file):
+	
+	return structures
+ 
+def check_fragments(settings,structures):
+	if len(settings.frag1atoms) + len(settings.frag2atoms) != len(structures.atoms):
+		sys.exit()
+	for x in settings.frag1atoms:
+		if int(x) > len(structures.atoms):
+			sys.exit()
+	for x in settings.frag2atoms:
+		if int(x) > len(structures.atoms):
+			sys.exit()
+	if duplicates(settings.frag1atoms):
+		sys.exit()
+	if duplicates(settings.frag2atoms):
+		sys.exit()	
+	elif len(set(fragment1_atoms) & set(fragment2_atoms)) > 0: 
+		sys.exit()	
+	return
+
+def structures_from_G(file, settings):
+	file_object = open(file, 'r')
+	input = (line for line in file_object)
+	type = "single"
+	for line in input:
+		if "IRC-IRC-IRC" in line:
+			type = "IRC"
+			break
+		elif "Scan" in line:
+			type = "scan"
+			break
+	# Single
+	if type == "single":
+		structures = get_single(file)
+	elif type == "scan":
+		structures = get_scan(file)
+	else:
+		structures = get_irc(file)
+	
+	# Get Charge and multiplicity
+	input_object.seek(0)
+	input_file = (line for line in input_object) # make generator	
+	for line in input_file:
+		if "Charge =" in line:
+			settings.charge = line.split()[2]
+			settings.multi = line.split()[5]
+			break
+	return structures, settings
+
 
 def structures_from_xyz(file):
 	structures.atoms = []
@@ -97,6 +292,7 @@ def parse_in(input_filename):
 	for line in structure_file:
 		if "Gaussian, Inc." in line:
 			settings.filetype="G"
+			break
 	if setting.filetype == "X"
 		structures = structures_from_xyz(settings.ircfile)
 	else:
@@ -244,6 +440,15 @@ def parse_in(input_filename):
 				except IndexError:
 					break
 	#Determine fragment atoms if not set
+	if settings.frag1atoms == "auto" and settings.frag2atoms == "auto":
+		settings.frag1atoms, settings.frag2atoms = auto_frag(structures,settings)
+	elif settings.frag1atoms == "auto":	
+		settings.frag2atoms = list(range(1,len(structures.atoms)+1))
+		settings.frag2atoms = [item for item in settings.frag2atoms if item not in set(settings.frag1atoms)]
+	elif settings.frag2atoms == "auto":	
+		settings.frag1atoms = list(range(1,len(structures.atoms)+1))
+		settings.frag1atoms = [item for item in settings.frag1atoms if item not in set(settings.frag2atoms)]	
+	check_fragments(settings,structures) #checks if atom lists are coherent
 	
 #------------Get analysis information
 	input_object.seek(0)
@@ -290,6 +495,7 @@ def parse_in(input_filename):
 				settings.geo_dist.append(auto_distances[0])
 				settings.geo_dist.append(auto_distances[1])
 				break
+	
 #------------Get Further Setting
 
 #------------Get Settings for running the application
