@@ -44,6 +44,21 @@ def molecular_formula(atoms):
 			formula = formula + alphabetic_periodic_table[x] + str(count[x])
 	return formula
 	
+def isBond(distance, atomtype1, atomtype2, covalent_radii):
+	bond = True
+	'''find bond threshold based on covalent radii
+	taken from 10.1039/b801115j
+	For everything beyond Cm 1.80 A was used.
+	get radii from saved numpy array
+	use atomtypes as numbers
+	use factor to be sure to catch bonds. Bigger factor means more bonds are detected
+	'''
+	atomtype1 = int(periodic_table.index(atomtype1))
+	atomtype2 = int(periodic_table.index(atomtype2))
+	bond_threshold = 1.25 * (covalent_radii[atomtype1]+covalent_radii[atomtype2])
+	if distance > bond_threshold:
+		bond = False
+	return bond
 	
 def getFragments(structure, atoms):
 	#get connectivity for each irc structure
@@ -101,6 +116,49 @@ def getFragments(structure, atoms):
 		fragments=new_fragments
 		n_frag_new=len(fragments)
 	return fragments	
+
+def getConnectivity(structure):
+	connectivity_matrix = np.zeros((len(structure),len(structure)))
+	for i in range(0,len(connectivity_matrix )):
+		for j in range(0,len(connectivity_matrix)):
+			distance=getDistance(structure[i],structure[j])
+			if isBond(distance,structures.atoms[i], structures.atoms[j],covalent_radii):
+				connectivity_matrix[i][j] = 1
+			else:
+				connectivity_matrix[i][j] = 0
+	return connectivity_matrix
+
+
+# finds up to two bonds that get formed
+def getBonds(structures):
+	count = np.zeros((structures.xyz[0].shape[0],structures.xyz[0].shape[0]))
+	#construct connectivity matrix step 0
+	connectivity_old = getConnectivity(structures.xyz[0])	
+	#now iterate over all the matrices and count changes
+	for element in structures.xyz:
+		connectivity = getConnectivity(element)
+		for i in range(0, len(connectivity)):
+			for j in range(0, len(connectivity[i])):
+				if connectivity[i][j] != connectivity_old[i][j]:
+					count[i][j] = count[i][j] +1
+		connectivity_old= connectivity
+	#clear of lower triangle of the matrix to eliminate duplicates
+	for i in range(0,len(count)):
+		for j in range(0, len(count)):
+			if i >= j:
+				count[i][j] = 0
+	
+	count[count == 0] = 1000	
+	#now find conenctivity for lowest number in count matrix, equals the bond that changed status the least, might not be the optimal solution
+	freq = np.amin(count)
+	geodist = [[int(np.where(count == freq)[0][0])+1,int(np.where(count == freq)[1][0])+1]]
+	count[np.where(count == freq)[0][0],np.where(count == freq)[1][0]] = 1001
+	
+	freq = np.amin(count)
+	geodist = geodist + [[int(np.where(count == freq)[0][0])+1,int(np.where(count == freq)[1][0])+1]]
+
+	return geodist
+
 	
 def duplicates(int_list):
 	int_list = sorted(int_list)
@@ -115,15 +173,15 @@ def duplicates(int_list):
 def auto_frag(structures,settings):
 	list_of_fragments = []
 	for i in range(0, len(structures.xyz)):
-		list_of_fragments =  list_of_fragments + [getFragments(structures.xyz[i], atoms)]
+		list_of_fragments =  list_of_fragments + [getFragments(structures.xyz[i], structures.atoms)]
 	n_fragments = []
-	for i in range(0,list_of_fragments):
+	for i in range(0,len(list_of_fragments)):
 		n_fragments = n_fragments + [len(list_of_fragments[i])]
 	indices = [i for i, x in enumerate(n_fragments) if x == 2]
 	counts = [list_of_fragments.count(list_of_fragments[x]) for x in indices]
 	fragments = list_of_fragments[indices[counts.index(max(counts))]]
-	settings.frag1atoms = fragments[0]
-	settings.frag2atoms = fragments[1]
+	settings.frag1atoms = np.sort(fragments[0])
+	settings.frag2atoms = np.sort(fragments[1])
 	return settings
  
  def get_single(file):
@@ -230,7 +288,7 @@ def structures_from_xyz(file):
 			XYZ=np.concatenate((XYZ,coords), axis=0)
 		except NameError:
 			XYZ=coords
-	strcutures.xyz.append(XYZ) #append first structure to structures list
+	structures.xyz.append(XYZ) #append first structure to structures list
 	del XYZ #get rid of that for the next structure
 	#now search for more structures
 	for line in input:
@@ -489,18 +547,189 @@ def parse_in(input_filename):
 		#Automatic determination of formed, broken bonds if requested
 		for element in settings.geo_dist:
 			if "auto" in element:
-				auto_distances = auto_dist(structures)
+				auto_distances = getBonds(structures)
 				#replace auto in that list against the new distances
 				settings.geo_dist = [ x for x in settings.geo_dist if "auto" not in x]
 				settings.geo_dist.append(auto_distances[0])
 				settings.geo_dist.append(auto_distances[1])
 				break
-	
+		
 #------------Get Further Setting
+	#keep xyz
+	input_object.seek(0)
+	input_file = (line for line in input_object) # make generator	
+	settings.keepxyz = True
+	for line in input_file:
+		if len(line.split()) > 2:
+			if line.split()[0].upper()+line.split()[1].upper()  == "KEEPXYZ":
+				try: #in case it's blank
+					line.split()[3]
+				except IndexError:
+					settings.keepxyz = True
+					break
+				if line.split()[3].upper() == "YES":
+					settings.keepxyz = True
+				elif line.split()[3].upper() == "NO":
+					settings.keepxyz = False
+				else:
+					settings.keepxyz = True
+				break		
+	#keep input files
+	input_object.seek(0)
+	input_file = (line for line in input_object) # make generator	
+	settings.keepinput = True
+	for line in input_file:
+		if len(line.split()) > 3:
+			if line.split()[0].upper()+line.split()[1].upper()+line.split()[2].upper()   == "KEEPINPUTFILES":
+				try: #in case it's blank
+					line.split()[4]
+				except IndexError:
+					settings.keepinput  = True
+					break
+				if line.split()[4].upper() == "YES":
+					settings.keepinput = True
+				elif line.split()[4].upper() == "NO":
+					settings.keepinput  = False
+				else:
+					settings.keepinput  = True
+				break				
+	#keep output files
+	input_object.seek(0)
+	input_file = (line for line in input_object) # make generator	
+	settings.keepoutput = True
+	for line in input_file:
+		if len(line.split()) > 3:
+			if line.split()[0].upper()+line.split()[1].upper()+line.split()[2].upper()   == "KEEPOUTPUTFILES":
+				try: #in case it's blank
+					line.split()[4]
+				except IndexError:
+					settings.keepoutput  = True
+					break
+				if line.split()[4].upper() == "YES":
+					settings.keepoutput = True
+				elif line.split()[4].upper() == "NO":
+					settings.keepoutput  = False
+				else:
+					settings.keepoutput  = True
+				break		
+	#keep log file
+	input_object.seek(0)
+	input_file = (line for line in input_object) # make generator	
+	settings.keeplog = True
+	for line in input_file:
+		if len(line.split()) > 3:
+			if line.split()[0].upper()+line.split()[1].upper()+line.split()[2].upper()   == "KEEPLOGFILE":
+				try: #in case it's blank
+					line.split()[4]
+				except IndexError:
+					settings.keeplog   = True
+					break
+				if line.split()[4].upper() == "YES":
+					settings.keeplog  = True
+				elif line.split()[4].upper() == "NO":
+					settings.keeplog   = False
+				else:
+					settings.keeplog   = True
+				break				
+	#reorder
+	input_object.seek(0)
+	input_file = (line for line in input_object) # make generator	
+	settings.reorder = False
+	for line in input_file:
+		if len(line.split()) > 2:
+			if line.split()[0].upper()   == "REORDER":
+				try: #in case it's blank
+					line.split()[2]
+				except IndexError:
+					settings.reorder   = False
+					break
+				if line.split()[2].upper() == "YES":
+					settings.reorder  = True
+				elif line.split()[2].upper() == "NO":
+					settings.reorder   = False
+				else:
+					settings.reorder   = False
+				break					
+	#reduce structures
+	input_object.seek(0)
+	input_file = (line for line in input_object) # make generator	
+	settings.reduce = False
+	for line in input_file:
+		if len(line.split()) > 3:
+			if line.split()[0].upper()+line.split()[1].upper()   == "REDUCESTRUCTURES":
+				try: #in case it's blank
+					line.split()[3]
+				except IndexError:
+					settings.reduce   = False
+					break
+				if line.split()[3].upper() == "YES":
+					settings.reduce  = True
+				elif line.split()[3].upper() == "NO":
+					settings.reduce   = False
+				else:
+					settings.reduce   = False
+				break	
+	if settings.reduce:
+		input_object.seek(0)
+		input_file = (line for line in input_object) # make generator	
+		settings.reduce_tresh = 0.2
+		for line in input_file:
+			if len(line.split()) > 3:
+				if line.split()[0].upper()+line.split()[1].upper()   == "RMSDTRESHOLD":
+					try: #in case it's blank
+						line.split()[3]
+					except IndexError:
+						settings.reduce_tresh    = 0.2
+						break
+					try:
+						settings.reduce_tresh = float(line.split()[3].upper() )
+					except ValueError:
+						settings.reduce_tresh = 0.2
+					break
+	#prepare only
+	input_object.seek(0)
+	input_file = (line for line in input_object) # make generator	
+	settings.prepareonly = False
+	for line in input_file:
+		if len(line.split()) > 3:
+			if line.split()[0].upper()+line.split()[1].upper()   == "PREPAREONLY":
+				try: #in case it's blank
+					line.split()[3]
+				except IndexError:
+					settings.prepareonly  = False
+					break
+				if line.split()[3].upper() == "YES":
+					settings.prepareonly  = True
+				elif line.split()[3].upper() == "NO":
+					settings.prepareonly   = False
+				else:
+					settings.prepareonly   = False
+				break							
 
+				
 #------------Get Settings for running the application
-
-
+	input_object.seek(0)
+	input_file = (line for line in input_object) # reset generator
+	settings.input_file_extension = "com" #setting default
+	for line in input_file:
+		if len(line.split()) > 2: # This is needed otherwise it produces out of range error when contents of lines too short
+			if line.split()[0].upper()+line.split()[1].upper()+line.split()[2].upper() == "INPUTFILEEXTENSION":
+				try: #in case it's blank
+					settings.input_file_extension = line.split()[4]
+					break
+				except IndexError:
+					break
+	input_object.seek(0)
+	input_file = (line for line in input_object) # reset generator
+	settings.output_file_extension = "log" #setting default
+	for line in input_file:
+		if len(line.split()) > 2: # This is needed otherwise it produces out of range error when contents of lines too short
+			if line.split()[0].upper()+line.split()[1].upper()+line.split()[2].upper() == "OUTPUTFILEEXTENSION":
+				try: #in case it's blank
+					settings.output_file_extension = line.split()[4]
+					break
+				except IndexError:
+					break
 
 
 	
