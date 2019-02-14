@@ -22,7 +22,7 @@ multiplicity = 1
 Fragment1 name = Fragment1
 Fragment1 charge = 0
 Fragment1 multiplicity = 1
-Fragment1 atoms = 26 27 28 29 30 31 32 33 34 35
+Fragment1 atoms = 
 Fragment1 energy = -243.485731
 
 Fragment2 name = Fragment2
@@ -62,16 +62,16 @@ Analysis = YES
 Further Settings
 #--------------------------------------------------
 
-Keep xyz = YES
+Keep xyz = NO
 Keep input files = YES
 Keep output files = YES
 Keep log file = YES
 
-#Prevents reordering of IRC structures
-No reorder = NO
+#Reordering of IRC structures
+reorder = NO
 
 #Eliminate very similar structures based on a certain RMSD treshold
-Reduce structures = NO
+Reduce structures = Yes
 RMSD treshold = 0.2
 
 # Does only prepare input files but does not run them, no analysis either
@@ -85,9 +85,9 @@ Input File Structure
 # please provide the settings for single point calculations
 # use $filename and $coordinates $charge and $multiplicity in places where they are required
 # Keep in mind the correct number of blank lines
-#Even though this block is called "Gaussian" other software can be used by posting the correct input structure and adjusting the system settings below
 
-<Gaussian>
+
+<layout>
 %mem=32GB
 %nprocshared=16
 # B3LYP/6-311+g(d,p) empiricaldispersion=gd3
@@ -97,7 +97,7 @@ Title
 $coordinates
 
 
-</Gaussian>
+</layout>
 
 #--------------------------------------------------
 Input File Structure

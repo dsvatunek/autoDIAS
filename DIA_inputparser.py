@@ -1,5 +1,9 @@
-class settings:
-	pass
+
+import numpy as np
+import sys
+import re
+
+
 class structures:
 	pass
 
@@ -18,7 +22,15 @@ def getDistance(atom1, atom2):
 	distance = 0.00
 	distance = np.sqrt((atom1[0]-atom2[0])**2+(atom1[1]-atom2[1])**2+(atom1[2]-atom2[2])**2)
 	return distance
-	
+
+# checks if "s" is an int, returns true or false
+def isInt(s):
+    try: 
+        int(s)
+        return True
+    except ValueError:
+        return False	
+
 def molecular_formula(atoms):
 	alphabetic_periodic_table = sorted(copy.deepcopy(periodic_table))
 	formula = ""
@@ -184,12 +196,12 @@ def auto_frag(structures,settings):
 	settings.frag2atoms = np.sort(fragments[1])
 	return settings
  
- def get_single(file):
- 	structures.atoms = []
+def get_single(file):
+	structures.atoms = []
 	structures.xyz = []
 	structures.title = []
 	with open(file) as input_file:
-	file_contents = input_file.read() 
+		file_contents = input_file.read() 
 	if "Optimization completed." in file_contents:
 		regex = r'\ ---------------------------------------------------------------------\n((?:(?!\ ---------------------------------------------------------------------\n).)*?)\ ---------------------------------------------------------------------\n(?:(?!\ ---------------------------------------------------------------------\n).)*?Stationary\ point\ found'
 		for match in re.finditer(regex, file_contents, re.IGNORECASE|re.DOTALL):
@@ -205,29 +217,29 @@ def auto_frag(structures,settings):
 	structures.atoms = [periodic_table[int(x)] for x in atoms]
 	return structures
  
-  def get_scan(file):
+def get_scan(file):
  
 	return structures
 
- def get_irc(file):
+def get_irc(file):
 	
 	return structures
  
 def check_fragments(settings,structures):
 	if len(settings.frag1atoms) + len(settings.frag2atoms) != len(structures.atoms):
-		sys.exit()
+		sys.exit("1")
 	for x in settings.frag1atoms:
 		if int(x) > len(structures.atoms):
-			sys.exit()
+			sys.exit("2")
 	for x in settings.frag2atoms:
 		if int(x) > len(structures.atoms):
-			sys.exit()
+			sys.exit("3")
 	if duplicates(settings.frag1atoms):
-		sys.exit()
+		sys.exit("4")
 	if duplicates(settings.frag2atoms):
-		sys.exit()	
-	elif len(set(fragment1_atoms) & set(fragment2_atoms)) > 0: 
-		sys.exit()	
+		sys.exit("5")	
+	elif len(set(settings.frag1atoms) & set(settings.frag2atoms)) > 0: 
+		sys.exit("6")	
 	return
 
 def structures_from_G(file, settings):
@@ -314,7 +326,9 @@ def structures_from_xyz(file):
 
 
 def parse_in(input_filename):
-	import re
+	class settings:
+		pass
+	settings.void = []
 	input_object = open(input_filename, 'r')
 #------------structures filename
 	input_object.seek(0)
@@ -326,7 +340,7 @@ def parse_in(input_filename):
 				break
 	else: #information on input file type is missing
 		print('Error:\t\tNo information on the structure input file could be found')
-		sys.exit()	
+		sys.exit("7")	
 #------------GET JOBNAME
 	input_object.seek(0)
 	input_file = (line for line in input_object) # make generator
@@ -351,7 +365,7 @@ def parse_in(input_filename):
 		if "Gaussian, Inc." in line:
 			settings.filetype="G"
 			break
-	if setting.filetype == "X"
+	if settings.filetype == "X":
 		structures = structures_from_xyz(settings.ircfile)
 	else:
 		structures = structures_from_G(settings.ircfile)	
@@ -362,7 +376,7 @@ def parse_in(input_filename):
 	#check if they were extracted from file, if not set to 0 and then try to read
 	try:
 		settings.charge
-	except NameError:
+	except AttributeError:
 		settings.charge = 0
 	for line in input_file:
 		if len(line.split()) > 0:
@@ -375,7 +389,7 @@ def parse_in(input_filename):
 	#MULTIPLICITY
 	try:
 		settings.charge
-	except NameError:
+	except AttributeError:
 		settings.multi = 1
 	for line in input_file:
 		if len(line.split()) > 0:
@@ -434,13 +448,15 @@ def parse_in(input_filename):
 	input_file = (line for line in input_object) # make generator	
 	settings.frag1atoms = "auto"
 	for line in input_file:
-		if len(re.split("\s+|,",line)) > 1:
+		if len(re.split("\s+|,",line)) > 2:
 			if line.split()[0].upper()+line.split()[1].upper()  == "FRAGMENT1ATOMS":
 				try:
 					settings.frag1atoms =re.split("\s+|,",line)[3:]
 					break
 				except IndexError:
-					break				
+					break
+	if settings.frag1atoms[0] == '':
+		settings.frag1atoms  = "auto"
 	#FRAGMENT2
 	input_object.seek(0)
 	input_file = (line for line in input_object) # make generator	
@@ -490,16 +506,18 @@ def parse_in(input_filename):
 	input_file = (line for line in input_object) # make generator	
 	settings.frag2atoms = "auto"
 	for line in input_file:
-		if len(re.split("\s+|,",line)) > 1:
+		if len(re.split("\s+|,",line)) > 2:
 			if line.split()[0].upper()+line.split()[1].upper()  == "FRAGMENT2ATOMS":
 				try:
 					settings.frag2atoms =re.split("\s+|,",line)[3:]
 					break
 				except IndexError:
 					break
+	if settings.frag2atoms[0] == '':
+		settings.frag2atoms  = "auto"
 	#Determine fragment atoms if not set
 	if settings.frag1atoms == "auto" and settings.frag2atoms == "auto":
-		settings.frag1atoms, settings.frag2atoms = auto_frag(structures,settings)
+		settings = auto_frag(structures,settings)
 	elif settings.frag1atoms == "auto":	
 		settings.frag2atoms = list(range(1,len(structures.atoms)+1))
 		settings.frag2atoms = [item for item in settings.frag2atoms if item not in set(settings.frag1atoms)]
@@ -516,35 +534,38 @@ def parse_in(input_filename):
 		if len(line.split()) > 0:
 			if line.split()[0].upper()  == "ANALYSIS":
 				try:
-					if settings.analysis.upper() == "YES":
+					if line.split()[2].upper()  == "YES":
 						settings.analysis = True
-					elif settings.analysis.upper() == "NO":
+						break
+					elif line.split()[2].upper()  == "NO":
 						settings.analysis = False
+						break
 				except IndexError:
 					break	
 	if settings.analysis:
 		settings.geo_dist = []
 		with open(input_filename) as input_file:
 			file_contents = input_file.read() # reset generator
-		try:
-			for match in re.finditer(r'<distances>(.*?)</distances>', file_contents, re.IGNORECASE|re.DOTALL):
-				settings.geo_dist = match.group(1).strip().split('\n')
-				settings.geo_dist = [element.split() for element in settings.geo_dist]
+
+		for match in re.finditer(r'<distances>(.*?)</distances>', file_contents, re.IGNORECASE|re.DOTALL):
+			settings.geo_dist = match.group(1).strip().split('\n')
+			settings.geo_dist = [element.split() for element in settings.geo_dist]
+		
 		settings.geo_ang = []
 		with open(input_filename) as input_file:
 			file_contents = input_file.read() # reset generator
-		try:
-			for match in re.finditer(r'<angles>(.*?)</angles>', file_contents, re.IGNORECASE|re.DOTALL):
-				settings.geo_ang = match.group(1).strip().split('\n')
-				settings.geo_ang = [element.split() for element in settings.geo_ang]
-		settings.geo_ang = []
+		for match in re.finditer(r'<angles>(.*?)</angles>', file_contents, re.IGNORECASE|re.DOTALL):
+			settings.geo_ang = match.group(1).strip().split('\n')
+			settings.geo_ang = [element.split() for element in settings.geo_ang]
+		settings.geo_dih = []
 		with open(input_filename) as input_file:
 			file_contents = input_file.read() # reset generator
-		try:
-			for match in re.finditer(r'<dihedral>(.*?)</dihedral>', file_contents, re.IGNORECASE|re.DOTALL):
-				settings.geo_dih = match.group(1).strip().split('\n')
-				settings.geo_dih = [element.split() for element in settings.geo_dih]
+		for match in re.finditer(r'<dihedral>(.*?)</dihedral>', file_contents, re.IGNORECASE|re.DOTALL):
+			settings.geo_dih = match.group(1).strip().split('\n')
+			settings.geo_dih = [element.split() for element in settings.geo_dih]
 		#Automatic determination of formed, broken bonds if requested
+		if len(settings.geo_dist) == 0:
+			settings.geo_dist = [["auto"]]
 		for element in settings.geo_dist:
 			if "auto" in element:
 				auto_distances = getBonds(structures)
@@ -730,7 +751,18 @@ def parse_in(input_filename):
 					break
 				except IndexError:
 					break
-
+	#get input layout
+	settings.inputlayout = ""
+	with open(input_filename) as input_file:
+		file_contents = input_file.read() # reset generator
+	for match in re.finditer(r'<layout>(.*?)</layout>', file_contents, re.IGNORECASE|re.DOTALL):
+		settings.inputlayout = match.group(1).strip()+'\n\n'
+	#get run settings
+	settings.submit_setting = ""
+	with open(input_filename) as input_file:
+		file_contents = input_file.read() # reset generator
+	for match in re.finditer(r'<run_job>(.*?)</run_job>', file_contents, re.IGNORECASE|re.DOTALL):
+		settings.submit_setting  = match.group(1).strip()
 
 	
 	return settings, structures
