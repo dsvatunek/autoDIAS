@@ -440,7 +440,7 @@ def parse_in(input_filename):
 		if len(line.split()) > 1:
 			if line.split()[0].upper()+line.split()[1].upper()  == "FRAGMENT1ENERGY":
 				try:
-					settings.frag1multi = float(line.split()[-1])
+					settings.frag1energy = float(line.split()[-1])
 					break
 				except IndexError:
 					break				
@@ -498,7 +498,7 @@ def parse_in(input_filename):
 		if len(line.split()) > 1:
 			if line.split()[0].upper()+line.split()[1].upper()  == "FRAGMENT2ENERGY":
 				try:
-					settings.frag2multi = float(line.split()[-1])
+					settings.frag2energy = float(line.split()[-1])
 					break
 				except IndexError:
 					break				
@@ -543,7 +543,7 @@ def parse_in(input_filename):
 				except IndexError:
 					break	
 	if settings.analysis:
-		settings.geo_dist = []
+		settings.geo_dist = [[]]
 		with open(input_filename) as input_file:
 			file_contents = input_file.read() # reset generator
 
@@ -564,7 +564,7 @@ def parse_in(input_filename):
 			settings.geo_dih = match.group(1).strip().split('\n')
 			settings.geo_dih = [element.split() for element in settings.geo_dih]
 		#Automatic determination of formed, broken bonds if requested
-		if len(settings.geo_dist) == 0:
+		if settings.geo_dist[0] == []:
 			settings.geo_dist = [["auto"]]
 		for element in settings.geo_dist:
 			if "auto" in element:
@@ -574,7 +574,11 @@ def parse_in(input_filename):
 				settings.geo_dist.append(auto_distances[0])
 				settings.geo_dist.append(auto_distances[1])
 				break
-		
+		#eliminate problems with empty lists
+		if settings.geo_ang[0] == []:
+			settings.geo_ang = []
+		if settings.geo_dih[0] == "":
+			settings.geo_dih = []	
 #------------Get Further Setting
 	#keep xyz
 	input_object.seek(0)
