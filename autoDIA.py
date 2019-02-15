@@ -21,7 +21,8 @@ Further reading:
 
 from DIA_inputparser import *
 from DIA_analysis import *
-import argparse, sys, time, subprocess, os, datetime
+from DIA_reduce_reorder import *
+import argparse, sys, time, subprocess, os, datetime, copy
 
 __version__= ' '
 
@@ -55,6 +56,33 @@ def save_input(A, atoms, title, filename, jobname, g09structure, charge, multipl
 	file.close()
 	return
 
+def molecular_formula(atoms):
+	alphabetic_periodic_table = sorted(copy.deepcopy(periodic_table))
+	formula = ""
+	count = []
+	for element in alphabetic_periodic_table:
+		count =  count + [atoms.count(element)]
+	
+	if count[alphabetic_periodic_table.index("C")] > 1:
+		formula = formula + 'C' + str(count[alphabetic_periodic_table.index("C")])
+		count[alphabetic_periodic_table.index("C")] = 0
+	elif count[alphabetic_periodic_table.index("C")] > 0:
+		formula = formula + 'C'
+		count[alphabetic_periodic_table.index("C")] = 0
+	
+	if count[alphabetic_periodic_table.index("H")] > 1:
+		formula = formula + 'H' + str(count[alphabetic_periodic_table.index("H")])
+		count[alphabetic_periodic_table.index("H")] = 0	
+	elif count[alphabetic_periodic_table.index("H")] > 0:
+		formula = formula + 'H'
+		count[alphabetic_periodic_table.index("H")] = 0
+		
+	for x in range(0, len(alphabetic_periodic_table)):
+		if count[x] == 1:
+			formula = formula + alphabetic_periodic_table[x]
+		elif count[x] > 1:
+			formula = formula + alphabetic_periodic_table[x] + str(count[x])
+	return formula
 
 def main():
 
@@ -73,10 +101,17 @@ def main():
 	settings, structures = parse_in(args.inp_file)
 	#analysis only run analysis only and then stop
 	if args.analysis:
-		print("analysis only")
+		endtime=time.time()
+		totaltime=str(endtime-starttime)
+		seconds=totaltime.split('.')[0]
+		milliseconds=float('0.'+totaltime.split('.')[1])*1000	
+		print('Processed input and parsed structures in {} seconds and {:.0f} ms'.format(seconds, float(milliseconds)))	
+		if settings.reorder:
+			structures = reorder(structures)
+		if settings.reduce:
+			structures = reduce(structures, settings)
 		analysis_only(structures,settings)
 		return
-		
 		
 	endtime=time.time()
 	totaltime=str(endtime-starttime)
@@ -120,32 +155,30 @@ def main():
 		log.write('{0:50}{1}\n'.format("Threshold for reducing structures",settings.reduce_tresh))
 	log.write('{0:50}{1}\n'.format("Prepare input and exit","YES" if settings.prepareonly else "NO"))
 	# structure fragment details
+	formula = molecular_formula(structures.atoms)
+	fragment1_formula = molecular_formula(structures.frag1atoms)
+	fragment2_formula = molecular_formula(structures.frag2atoms)
 	
+	log.write('\nStructure information\n\n')
+	log.write('Input structure has {} atoms with a molecular formula of:{:>15}\n\n'.format(len(structures.atoms), formula))
+	log.write('{0} has {1} atoms with a molecular formula of:{2:>15}\n\n'.format(settings.frag1name, len(structures.frag1atoms), fragment1_formula))
+	log.write('{0} has {1} atoms with a molecular formula of:{2:>15}\n\n'.format(settings.frag2name, len(structures.frag2atoms), fragment2_formula))
+	log.write('{0} has a charge and multiplicity of: {1} {2}\n'.format(settings.frag1name, settings.frag1charge, settings.frag1multi))
+	log.write('{0} has a charge and multiplicity of: {1} {2}\n'.format(settings.frag2name, settings.frag2charge, settings.frag2multi))
+	log.write('{0} has an energy of: {1}\n'.format(settings.frag1name, settings.frag1energy))
+	log.write('{0} has an energy of: {1}\n'.format(settings.frag2name, settings.frag2energy))
+	log.write('\n')
 	
 	log.write('-------------------------------------------------------\n')		
 	log.close()
 	
 #-------------------------------------Reorder and reduce----------------------------
-	
-	
+	if settings.reorder:
+		structures = reorder(structures)
+	if settings.reduce:
+		structures = reduce(structures, settings)
 #-------------------------------------Produce input---------------------------------
 	starttime=time.time()
-	
-	#get fragment xyz
-	structures.xyz_1 = []
-	settings.frag1atoms[:] = [x -1 for x in settings.frag1atoms]
-	for x in range(0, len(structures.xyz)):
-		structures.xyz_1 = structures.xyz_1 + [structures.xyz[x][settings.frag1atoms]]
-	structures.xyz_2 = []
-	settings.frag2atoms[:] = [x -1 for x in settings.frag2atoms]
-	for x in range(0, len(structures.xyz)):
-		structures.xyz_2 = structures.xyz_2 + [structures.xyz[x][settings.frag2atoms]]
-	structures.frag1atoms = []
-	for element in settings.frag1atoms:
-		structures.frag1atoms = structures.frag1atoms + [structures.atoms[element]]
-	structures.frag2atoms = []
-	for element in settings.frag2atoms:
-		structures.frag2atoms = structures.frag2atoms + [structures.atoms[element]]
 
 	if settings.keepxyz:
 		if not os.path.exists(settings.name+'_xyz'):
@@ -169,7 +202,7 @@ def main():
 	seconds=totaltime.split('.')[0]
 	milliseconds=float('0.'+totaltime.split('.')[1])*1000
 	log = open(settings.logfile, 'a')
-	log.write('\nProduced input files in {} seconds and {:.0f} ms\n'.format(seconds, float(milliseconds)))
+	log.write('Produced input files in {} seconds and {:.0f} ms\n'.format(seconds, float(milliseconds)))
 	log.write('-------------------------------------------------------\n')	
 	log.close()	
 	
@@ -217,9 +250,9 @@ def main():
 			if analysis:
 				analysis(settings, structures, x)
 				
-		totaltime=time.time()-overallstarttime
-	log.write('\n\n'+time.ctime()+' Finished after {:0>15}\n'.format(str(datetime.timedelta(seconds=totaltime))))
+	totaltime=time.time()-overallstarttime
 	log.write('-------------------------------------------------------\n')
+	log.write(time.ctime()+' Finished after {:0>15}\n'.format(str(datetime.timedelta(seconds=totaltime))))
 	log.write('-------------------------------------------------------\n')
 	log.close()	
 #-------------------------------------Clean up-----------------------------------------
@@ -232,7 +265,5 @@ def main():
 		
 		
 if __name__ == "__main__":
-
-
 	main()
 	

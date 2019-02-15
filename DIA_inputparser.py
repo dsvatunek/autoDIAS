@@ -525,6 +525,21 @@ def parse_in(input_filename):
 		settings.frag1atoms = list(range(1,len(structures.atoms)+1))
 		settings.frag1atoms = [item for item in settings.frag1atoms if item not in set(settings.frag2atoms)]	
 	check_fragments(settings,structures) #checks if atom lists are coherent
+	#get fragment xyz
+	structures.xyz_1 = []
+	settings.frag1atoms[:] = [x -1 for x in settings.frag1atoms]
+	for x in range(0, len(structures.xyz)):
+		structures.xyz_1 = structures.xyz_1 + [structures.xyz[x][settings.frag1atoms]]
+	structures.xyz_2 = []
+	settings.frag2atoms[:] = [x -1 for x in settings.frag2atoms]
+	for x in range(0, len(structures.xyz)):
+		structures.xyz_2 = structures.xyz_2 + [structures.xyz[x][settings.frag2atoms]]
+	structures.frag1atoms = []
+	for element in settings.frag1atoms:
+		structures.frag1atoms = structures.frag1atoms + [structures.atoms[element]]
+	structures.frag2atoms = []
+	for element in settings.frag2atoms:
+		structures.frag2atoms = structures.frag2atoms + [structures.atoms[element]]
 	
 #------------Get analysis information
 	input_object.seek(0)

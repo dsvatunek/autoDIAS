@@ -2,6 +2,7 @@ radian2degree= 57.2958
 hartree2kcal = 627.509
 
 import numpy as np
+import os, time
 
 def getSCF(file):
 	SCF = getG09SCF(file)
@@ -202,3 +203,17 @@ def analysis(settings, structures, x):
 	analysis_file.write('{:<20}'.format('{0:.9f}'.format(float(fragment2_SCF))))
 	analysis_file.write('\n')		
 	analysis_file.close()
+	
+	
+def analysis_only(structures, settings):
+	starttime= time.time()
+	create_analysis_file(settings)
+	for i in range(0, len(structures.xyz)):
+		analysis(settings, structures, i)
+	os.remove(settings.logfile)
+	endtime=time.time()
+	totaltime=str(endtime-starttime)
+	seconds=totaltime.split('.')[0]
+	milliseconds=float('0.'+totaltime.split('.')[1])*1000	
+	print('Analysis of {} structures done in {} seconds and {:.0f} ms'.format(len(structures.xyz),seconds, float(milliseconds)))	
+	return
