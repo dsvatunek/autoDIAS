@@ -54,107 +54,107 @@ def getDihedral(p0, p1, p2, p3):
 def create_analysis_file(settings):
 
 	analysis_file = open(settings.name+'_DIA.txt', 'w')
-	analysis_file.write('{:<15}'.format('Step'))
+	analysis_file.write('{0:<15}'.format('Step'))
 	
 	try:
 		for x in range(0, len(settings.geo_dist)):
-			analysis_file.write('{:<18}'.format('Distance between'))
+			analysis_file.write('{0:<18}'.format('Distance between'))
 	except NameError:
 		pass
 		
 	try:
 		for x in range(0, len(settings.geo_ang)):
-			analysis_file.write('{:<18}'.format('Angle between'))
+			analysis_file.write('{0:<18}'.format('Angle between'))
 	except NameError:
 		pass	
 		
 	try:
 		for x in range(0, len(settings.geo_dih)):
-			analysis_file.write('{:<18}'.format('Dihedral between'))
+			analysis_file.write('{0:<18}'.format('Dihedral between'))
 	except NameError:
 		pass	
 
 	
-	analysis_file.write('{:<15}'.format('Total energy'))
-	analysis_file.write('{:<15}'.format('E(Int)'))
-	analysis_file.write('{:<15}'.format('E(Dist)'))	
-	analysis_file.write('{:<15}'.format('E(Dist)'))
-	analysis_file.write('{:<15}'.format('E(Dist)'))
-	analysis_file.write('{:<20}'.format('E(SCF)'))
-	analysis_file.write('{:<20}'.format('E(SCF)'))
-	analysis_file.write('{:<20}'.format('E(SCF)'))
+	analysis_file.write('{0:<15}'.format('Total energy'))
+	analysis_file.write('{0:<15}'.format('E(Int)'))
+	analysis_file.write('{0:<15}'.format('E(Dist)'))	
+	analysis_file.write('{0:<15}'.format('E(Dist)'))
+	analysis_file.write('{0:<15}'.format('E(Dist)'))
+	analysis_file.write('{0:<20}'.format('E(SCF)'))
+	analysis_file.write('{0:<20}'.format('E(SCF)'))
+	analysis_file.write('{0:<20}'.format('E(SCF)'))
 	analysis_file.write('\n')
 
 
-	analysis_file.write('{:<15}'.format(''))
+	analysis_file.write('{0:<15}'.format(''))
 	try:
 		for x in range(0, len(settings.geo_dist)):
-			analysis_file.write('{:<18}'.format(str(settings.geo_dist[x][0])+'-'+str(settings.geo_dist[x][1])))
+			analysis_file.write('{0:<18}'.format(str(settings.geo_dist[x][0])+'-'+str(settings.geo_dist[x][1])))
 	except NameError:
 		pass		
 	try:
 		for x in range(0, len(settings.geo_ang)):
-			analysis_file.write('{:<18}'.format(settings.geo_ang[x][0]+'-'+settings.geo_ang[x][1]+'-'+ settings.geo_ang[x][2]))
+			analysis_file.write('{0:<18}'.format(settings.geo_ang[x][0]+'-'+settings.geo_ang[x][1]+'-'+ settings.geo_ang[x][2]))
 	except NameError:
 		pass
 	try:
 		for x in range(0, len(settings.geo_dih)):
-			analysis_file.write('{:<18}'.format(settings.geo_dih[x][0]+'-'+settings.geo_dih[x][1]+'-'+ settings.geo_dih[x][2]+'-'+ settings.geo_dih[x][3]))
+			analysis_file.write('{0:<18}'.format(settings.geo_dih[x][0]+'-'+settings.geo_dih[x][1]+'-'+ settings.geo_dih[x][2]+'-'+ settings.geo_dih[x][3]))
 	except NameError:
 		pass
 
-	analysis_file.write('{:<15}'.format(''))
-	analysis_file.write('{:<15}'.format(''))
-	analysis_file.write('{:<15}'.format('Total'))	
-	analysis_file.write('{:<15}'.format(settings.frag1name))
-	analysis_file.write('{:<15}'.format(settings.frag2name))
-	analysis_file.write('{:<20}'.format('complex'))
-	analysis_file.write('{:<20}'.format(settings.frag1name))
-	analysis_file.write('{:<20}'.format(settings.frag2name))
+	analysis_file.write('{0:<15}'.format(''))
+	analysis_file.write('{0:<15}'.format(''))
+	analysis_file.write('{0:<15}'.format('Total'))	
+	analysis_file.write('{0:<15}'.format(settings.frag1name))
+	analysis_file.write('{0:<15}'.format(settings.frag2name))
+	analysis_file.write('{0:<20}'.format('complex'))
+	analysis_file.write('{0:<20}'.format(settings.frag1name))
+	analysis_file.write('{0:<20}'.format(settings.frag2name))
 	analysis_file.write('\n')
 
-	analysis_file.write('{:<15}'.format(''))
+	analysis_file.write('{0:<15}'.format(''))
 	try:
 		for x in range(0, len(settings.geo_dist)):
-			analysis_file.write('{:<18}'.format('angstrom'))
+			analysis_file.write('{0:<18}'.format('angstrom'))
 	except NameError:
 		pass			
 	try:
 		for x in range(0, len(settings.geo_ang)):
-			analysis_file.write('{:<18}'.format('degree'))
+			analysis_file.write('{0:<18}'.format('degree'))
 	except NameError:
 		pass
 	try:
 		for x in range(0, len(settings.geo_dih)):
-			analysis_file.write('{:<18}'.format('degree'))
+			analysis_file.write('{0:<18}'.format('degree'))
 	except NameError:
 		pass
 		
-	analysis_file.write('{:<15}'.format('kcal/mol'))
-	analysis_file.write('{:<15}'.format('kcal/mol'))
-	analysis_file.write('{:<15}'.format('kcal/mol'))	
-	analysis_file.write('{:<15}'.format('kcal/mol'))
-	analysis_file.write('{:<15}'.format('kcal/mol'))
-	analysis_file.write('{:<20}'.format('hartree'))
-	analysis_file.write('{:<20}'.format('hartree'))
-	analysis_file.write('{:<20}'.format('hartree'))
+	analysis_file.write('{0:<15}'.format('kcal/mol'))
+	analysis_file.write('{0:<15}'.format('kcal/mol'))
+	analysis_file.write('{0:<15}'.format('kcal/mol'))	
+	analysis_file.write('{0:<15}'.format('kcal/mol'))
+	analysis_file.write('{0:<15}'.format('kcal/mol'))
+	analysis_file.write('{0:<20}'.format('hartree'))
+	analysis_file.write('{0:<20}'.format('hartree'))
+	analysis_file.write('{0:<20}'.format('hartree'))
 	analysis_file.write('\n')
 	try:
 		for x in range(0, len(settings.geo_dist)):
-			analysis_file.write('{:-<18}'.format(''))
+			analysis_file.write('{0:-<18}'.format(''))
 	except NameError:
 		pass
 	try:
 		for x in range(0, len(settings.geo_ang)):
-			analysis_file.write('{:-<18}'.format(''))
+			analysis_file.write('{0:-<18}'.format(''))
 	except NameError:
 		pass
 	try:
 		for x in range(0, len(settings.geo_dih)):
-			analysis_file.write('{:-<18}'.format(''))
+			analysis_file.write('{0:-<18}'.format(''))
 	except NameError:
 		pass
-	analysis_file.write('{:-<150}'.format(''))
+	analysis_file.write('{0:-<150}'.format(''))
 	analysis_file.write('\n')
 	analysis_file.close()
 	return
@@ -184,23 +184,23 @@ def analysis(settings, structures, x):
 		dihedral_values = dihedral_values + [getDihedral(structures.xyz[x][int(settings.geo_dih[y][0])-1],structures.xyz[x][int(settings.geo_dih[y][1])-1],structures.xyz[x][int(settings.geo_dih[y][2])-1],structures.xyz[x][int(settings.geo_dih[y][3])-1])]	# -1 since array begins with 0
 
 	# print to file
-	analysis_file.write('{:<15}'.format('{0:04d}'.format(x+1)))
+	analysis_file.write('{0:<15}'.format('{0:04d}'.format(x+1)))
 
 	for element in distance_values:
-		analysis_file.write('{:<18}'.format('{0:.3f}'.format(float(element))))
+		analysis_file.write('{0:<18}'.format('{0:.5f}'.format(float(element))))
 	for element in angle_values:
-		analysis_file.write('{:<18}'.format('{0:.3f}'.format(float(element))))
+		analysis_file.write('{0:<18}'.format('{0:.3f}'.format(float(element))))
 	for element in dihedral_values:
-		analysis_file.write('{:<18}'.format('{0:.3f}'.format(float(element))))
+		analysis_file.write('{0:<18}'.format('{0:.3f}'.format(float(element))))
 
-	analysis_file.write('{:<15}'.format('{0:.5f}'.format(float((irc_SCF-settings.frag1energy-settings.frag2energy)*hartree2kcal))))
-	analysis_file.write('{:<15}'.format('{0:.5f}'.format(float(interaction_energy*hartree2kcal))))
-	analysis_file.write('{:<15}'.format('{0:.5f}'.format(float((fragment1_dist+fragment2_dist)*hartree2kcal))))
-	analysis_file.write('{:<15}'.format('{0:.5f}'.format(float(fragment1_dist*hartree2kcal))))
-	analysis_file.write('{:<15}'.format('{0:.5f}'.format(float(fragment2_dist*hartree2kcal))))
-	analysis_file.write('{:<20}'.format('{0:.9f}'.format(float(irc_SCF))))
-	analysis_file.write('{:<20}'.format('{0:.9f}'.format(float(fragment1_SCF))))
-	analysis_file.write('{:<20}'.format('{0:.9f}'.format(float(fragment2_SCF))))
+	analysis_file.write('{0:<15}'.format('{0:.5f}'.format(float((irc_SCF-settings.frag1energy-settings.frag2energy)*hartree2kcal))))
+	analysis_file.write('{0:<15}'.format('{0:.5f}'.format(float(interaction_energy*hartree2kcal))))
+	analysis_file.write('{0:<15}'.format('{0:.5f}'.format(float((fragment1_dist+fragment2_dist)*hartree2kcal))))
+	analysis_file.write('{0:<15}'.format('{0:.5f}'.format(float(fragment1_dist*hartree2kcal))))
+	analysis_file.write('{0:<15}'.format('{0:.5f}'.format(float(fragment2_dist*hartree2kcal))))
+	analysis_file.write('{0:<20}'.format('{0:.9f}'.format(float(irc_SCF))))
+	analysis_file.write('{0:<20}'.format('{0:.9f}'.format(float(fragment1_SCF))))
+	analysis_file.write('{0:<20}'.format('{0:.9f}'.format(float(fragment2_SCF))))
 	analysis_file.write('\n')		
 	analysis_file.close()
 	
@@ -215,5 +215,5 @@ def analysis_only(structures, settings):
 	totaltime=str(endtime-starttime)
 	seconds=totaltime.split('.')[0]
 	milliseconds=float('0.'+totaltime.split('.')[1])*1000	
-	print('Analysis of {} structures done in {} seconds and {:.0f} ms'.format(len(structures.xyz),seconds, float(milliseconds)))	
+	print('Analysis of {0} structures done in {1} seconds and {2:.0f} ms'.format(len(structures.xyz),seconds, float(milliseconds)))	
 	return

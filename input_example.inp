@@ -37,32 +37,31 @@ Information for Analysis
 #--------------------------------------------------
 
 # Analysis does only work if Gaussian is used
-
 # Analysis can be turned on (YES) or off (NO), default is YES
 Analysis = YES
+
+
 
 # Distances can be extracted. Use atom numbers to define distances. Use one line per atom pair
 # write "auto" in line to attempt finding a total of two bonds that get formed or broken.
 <distances>
-2 26
-1 28
 </distances>
 
 # Angles can be extracted. Use atom numbers to define angles. Use one line per angle
 <angles>
-26 27 28
+ 
 </angles>
 
 # Dihedral angles can be extracted. Use atom numbers to define angles. Use one line per angle
 <dihedral>
-26 27 28 29
+1 2 3 4 
 </dihedral>
 
 #--------------------------------------------------
 Further Settings
 #--------------------------------------------------
 
-Keep xyz = NO
+Keep xyz = YES
 Keep input files = YES
 Keep output files = YES
 Keep log file = YES
@@ -71,10 +70,10 @@ Keep log file = YES
 reorder = NO
 
 #Eliminate very similar structures based on a certain RMSD treshold
-Reduce structures = Yes
+Reduce structures = NO
 RMSD treshold = 0.2
 
-# Does only prepare input files but does not run them, no analysis either
+# Does only prepare input files but does not run them, does not do analysis (use -a flag for analysis only
 Prepare only = NO
 
 

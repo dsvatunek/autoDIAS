@@ -1,8 +1,12 @@
-
 import numpy as np
 import sys
 import re
 
+def line_prepender(filename, line):
+	with open(filename, 'r+') as f:
+		content = f.read()
+		f.seek(0, 0)
+		f.write(line.rstrip('\r\n') + '\n' + content)
 
 class structures:
 	pass
@@ -199,7 +203,7 @@ def auto_frag(structures,settings):
 def get_single(file):
 	structures.atoms = []
 	structures.xyz = []
-	structures.title = []
+	structures.title = ['single structure']
 	with open(file) as input_file:
 		file_contents = input_file.read() 
 	if "Optimization completed." in file_contents:
@@ -212,35 +216,151 @@ def get_single(file):
 		for match in re.finditer(regex, file_contents, re.IGNORECASE|re.DOTALL):	
 			raw_coordinates = match.group(1).strip().split("\n")
 		
-	structures.xyz = [[x.split()[3:] for x in raw_coordinates]]
+	structures.xyz.append(np.array([x.split()[3:] for x in raw_coordinates]))
 	structures.atoms = [x.split()[1] for x in raw_coordinates]
-	structures.atoms = [periodic_table[int(x)] for x in atoms]
+	structures.atoms = [periodic_table[int(x)] for x in structures.atoms]
+	for i in range(len(structures.xyz)):
+		structures.xyz[i] = structures.xyz[i].astype(float)
 	return structures
- 
+	
 def get_scan(file):
- 
+	with open(file) as input_file:
+		file_contents = input_file.read() 
+	structures.xyz = []
+	structures.atoms = []
+
+	# find everything except the TS structure
+	regex = r'---------------------------------------------------------------------((?:(?!---------------------------------------------------------------------).)*?)---------------------------------------------------------------------(?:(?!---------------------------------------------------------------------).)*?Stationary\ point\ found'
+	for match in re.finditer(regex, file_contents, re.IGNORECASE|re.DOTALL):
+		raw_coordinates = match.group(1).strip().split("\n")
+		structures.xyz.append(np.array([x.split()[3:] for x in raw_coordinates]))
+	structures.atoms = [x.split()[1] for x in raw_coordinates]
+	structures.atoms = [periodic_table[int(x)] for x in structures.atoms]		
+		
+	for i in range(len(structures.xyz)):
+		structures.xyz[i] = structures.xyz[i].astype(float)	
+	structures.title = [str(x) for x in range(len(structures.xyz))] 
 	return structures
 
 def get_irc(file):
-	
+	with open(file) as input_file:
+		file_contents = input_file.read() 
+	structures.xyz = []
+	structures.atoms = []
+	# find TS structure, it's the first xyz structure available
+	regex = r'Z\n ---------------------------------------------------------------------\n(.*?)\n ---------------------------------------------------------------------\n'
+	for match in re.finditer(regex, file_contents, re.IGNORECASE|re.DOTALL):
+		raw_coordinates = match.group(1).strip().split("\n")
+		break
+	structures.xyz.append(np.array([x.split()[3:] for x in raw_coordinates]))
+	structures.atoms = [x.split()[1] for x in raw_coordinates]
+	structures.atoms = [periodic_table[int(x)] for x in structures.atoms]
+	# find everything except the TS structure
+	regex = r'---------------------------------------------------------------------((?:(?!---------------------------------------------------------------------).)*?)---------------------------------------------------------------------(?:(?!---------------------------------------------------------------------).)*?Delta-x\ Convergence\ Met'
+	for match in re.finditer(regex, file_contents, re.IGNORECASE|re.DOTALL):
+		raw_coordinates = match.group(1).strip().split("\n")
+		structures.xyz.append(np.array([x.split()[3:] for x in raw_coordinates]))
+		
+		
+	for i in range(len(structures.xyz)):
+		structures.xyz[i] = structures.xyz[i].astype(float)	
+	structures.title = [str(x) for x in range(len(structures.xyz))]
 	return structures
  
 def check_fragments(settings,structures):
-	if len(settings.frag1atoms) + len(settings.frag2atoms) != len(structures.atoms):
-		sys.exit("1")
 	for x in settings.frag1atoms:
 		if int(x) > len(structures.atoms):
+			line_prepender(settings.logfile, "CRITICAL ERROR: an atom number in fragment 1 is higher than the highest atom number!\n\n")
 			sys.exit("2")
 	for x in settings.frag2atoms:
 		if int(x) > len(structures.atoms):
+			line_prepender(settings.logfile, "CRITICAL ERROR: an atom number in fragment 2 is higher than the highest atom number!\n\n")
 			sys.exit("3")
+	if len(settings.frag1atoms) + len(settings.frag2atoms) != len(structures.atoms):
+		line_prepender(settings.logfile, "CRITICAL ERROR: number of specified fragment atoms does not equal total number of atoms!\n\n")
+		sys.exit("1")
 	if duplicates(settings.frag1atoms):
+		line_prepender(settings.logfile, "CRITICAL ERROR: at least one atom was defined more than once in fragment1!\n\n")
 		sys.exit("4")
 	if duplicates(settings.frag2atoms):
+		line_prepender(settings.logfile, "CRITICAL ERROR: at least one atom was defined more than once in fragment2!\n\n")
 		sys.exit("5")	
 	elif len(set(settings.frag1atoms) & set(settings.frag2atoms)) > 0: 
+		line_prepender(settings.logfile, "CRITICAL ERROR: at least one atom was defined in both fragments!\n\n")
 		sys.exit("6")	
 	return
+
+def check_geo(structures, settings):
+	natoms = len(structures.xyz)
+	i = 0
+	while i < len(settings.geo_dist): #check if every bond has two elements
+		if len(settings.geo_dist[i]) != 2:
+			del settings.geo_dist[i]
+			line_prepender(settings.logfile, "WARNING: defined bond did not have two elements! - This input is ignored\n\n")
+		else:
+			i = i+1
+	i = 0
+	while i < len(settings.geo_dist): #check if it's inly integers
+		if isInt(settings.geo_dist[i][0]) and isInt(settings.geo_dist[i][1]):
+			i = i+1
+		else:
+			del settings.geo_dist[i]
+			line_prepender(settings.logfile, "WARNING: defined bond did have non-integer input! - This input is ignored\n\n")	
+	if len(settings.geo_dist) == 0:
+		settings.geo_dist.append(getBonds(structures))
+		line_prepender(settings.logfile, "WARNING: no correct definitions of bonds found! - automatic detection of forming bonds\n\n")	
+	i = 0
+	while i < len(settings.geo_dist): #check if it's out of range
+		if int(settings.geo_dist[i][0]) > natoms or int(settings.geo_dist[i][1]) > natoms or int(settings.geo_dist[i][0]) < 1 or int(settings.geo_dist[i][1]) < 1 :
+			del settings.geo_dist[i]
+			line_prepender(settings.logfile, "WARNING: bond definition: atom number out of range! - This input is ignored\n\n")
+		else:
+			i = i+1		
+	# angles	
+	i=0
+	while i < len(settings.geo_ang): 
+		if len(settings.geo_ang[i]) != 3:
+			del settings.geo_ang[i]
+			line_prepender(settings.logfile, "WARNING: defined angle did not have three elements! - This input is ignored\n\n")
+		else:
+			i = i+1
+	i = 0
+	while i < len(settings.geo_ang): #check if it's inly integers
+		if isInt(settings.geo_ang[i][0]) and isInt(settings.geo_ang[i][1]) and isInt(settings.geo_ang[i][2]):
+			i = i+1
+		else:
+			del settings.geo_ang[i]
+			line_prepender(settings.logfile, "WARNING: defined angle did have non-integer input! - This input is ignored\n\n")
+	i=0
+	while i < len(settings.geo_ang): #check if it's out of range
+		if int(settings.geo_ang[i][0]) > natoms or int(settings.geo_ang[i][1]) > natoms or int(settings.geo_ang[i][2]) > natoms or int(settings.geo_ang[i][0]) < 1 or int(settings.geo_ang[i][1]) < 1 or int(settings.geo_ang[i][2]) < 1:
+			del settings.geo_ang[i]
+			line_prepender(settings.logfile, "WARNING: angle definition: atom number out of range! - This input is ignored\n\n")
+		else:
+			i = i+1					
+	# dihedral angles			
+	i=0
+	while i < len(settings.geo_dih): 
+		if len(settings.geo_dih[i]) != 4:
+			del settings.geo_dih[i]
+			line_prepender(settings.logfile, "WARNING: defined dihedral angle did not have three elements! - This input is ignored\n\n")
+		else:
+			i = i+1
+	i = 0
+	while i < len(settings.geo_dih): #check if it's inly integers
+		if isInt(settings.geo_dih[i][0]) and isInt(settings.geo_dih[i][1]) and isInt(settings.geo_dih[i][2]) and isInt(settings.geo_dih[i][3]):
+			i = i+1
+		else:
+			del settings.geo_dih[i]
+			line_prepender(settings.logfile, "WARNING: defined dihedral angle did have non-integer input! - This input is ignored\n\n")	
+	i=0
+	while i < len(settings.geo_dih): #check if it's out of range
+		if int(settings.geo_dih[i][0]) > natoms or int(settings.geo_dih[i][1]) > natoms or int(settings.geo_dih[i][2]) > natoms or int(settings.geo_dih[i][3]) > natoms or int(settings.geo_dih[i][0]) < 1 or int(settings.geo_dih[i][1]) < 1 or int(settings.geo_dih[i][2]) < 1 or int(settings.geo_dih[i][3]) < 1:
+			del settings.geo_dih[i]
+			line_prepender(settings.logfile, "WARNING: dihedral angle definition: atom number out of range! - This input is ignored\n\n")
+		else:
+			i = i+1	
+	return settings
 
 def structures_from_G(file, settings):
 	file_object = open(file, 'r')
@@ -260,10 +380,9 @@ def structures_from_G(file, settings):
 		structures = get_scan(file)
 	else:
 		structures = get_irc(file)
-	
 	# Get Charge and multiplicity
-	input_object.seek(0)
-	input_file = (line for line in input_object) # make generator	
+	file_object.seek(0)
+	input_file = (line for line in file_object) # make generator	
 	for line in input_file:
 		if "Charge =" in line:
 			settings.charge = line.split()[2]
@@ -324,7 +443,6 @@ def structures_from_xyz(file):
 			pass			
 	return structures
 
-
 def parse_in(input_filename):
 	class settings:
 		pass
@@ -355,11 +473,13 @@ def parse_in(input_filename):
 					break
 #------------Set Logfilename				
 	settings.logfile= settings.name + "_log.txt"
+	f= open(settings.logfile, 'w')
+	f.close()
 #------------Parse Structures
 	#find out what kind of file we are dealing with. See if it's a gaussian file
 	structure_object = open(settings.ircfile, 'r')
 	structure_object.seek(0)
-	structure_file = (line for line in input_object) # make generator
+	structure_file = (line for line in structure_object) # make generator
 	settings.filetype="X"
 	for line in structure_file:
 		if "Gaussian, Inc." in line:
@@ -368,7 +488,7 @@ def parse_in(input_filename):
 	if settings.filetype == "X":
 		structures = structures_from_xyz(settings.ircfile)
 	else:
-		structures = structures_from_G(settings.ircfile)	
+		structures, settings = structures_from_G(settings.ircfile, settings)
 #------------Get Information on Fragments/determine automatically
 	#CHARGE
 	input_object.seek(0)
@@ -397,7 +517,7 @@ def parse_in(input_filename):
 				try:
 					settings.multi = int(line.split()[-1])
 					break
-				except IndexError:
+				except (IndexError,ValueError) as error:
 					break
 	#FRAGMENT1
 	input_object.seek(0)
@@ -409,7 +529,7 @@ def parse_in(input_filename):
 				try:
 					settings.frag1name = line.split()[-1]
 					break
-				except IndexError:
+				except (IndexError,ValueError) as error:
 					break
 	input_object.seek(0)
 	input_file = (line for line in input_object) # make generator	
@@ -420,7 +540,7 @@ def parse_in(input_filename):
 				try:
 					settings.frag1charge = int(line.split()[-1])
 					break
-				except IndexError:
+				except (IndexError,ValueError) as error:
 					break						
 	input_object.seek(0)
 	input_file = (line for line in input_object) # make generator	
@@ -431,7 +551,7 @@ def parse_in(input_filename):
 				try:
 					settings.frag1multi = int(line.split()[-1])
 					break
-				except IndexError:
+				except (IndexError,ValueError) as error:
 					break
 	input_object.seek(0)
 	input_file = (line for line in input_object) # make generator	
@@ -442,7 +562,7 @@ def parse_in(input_filename):
 				try:
 					settings.frag1energy = float(line.split()[-1])
 					break
-				except IndexError:
+				except (IndexError,ValueError) as error:
 					break				
 	input_object.seek(0)
 	input_file = (line for line in input_object) # make generator	
@@ -455,7 +575,8 @@ def parse_in(input_filename):
 					break
 				except IndexError:
 					break
-	if settings.frag1atoms[0] == '':
+	settings.frag1atoms = [int(x) for x in settings.frag1atoms if isInt(x)]
+	if len(settings.frag1atoms) == 0:
 		settings.frag1atoms  = "auto"
 	#FRAGMENT2
 	input_object.seek(0)
@@ -478,7 +599,7 @@ def parse_in(input_filename):
 				try:
 					settings.frag2charge = int(line.split()[-1])
 					break
-				except IndexError:
+				except (IndexError,ValueError) as error:
 					break						
 	input_object.seek(0)
 	input_file = (line for line in input_object) # make generator	
@@ -489,7 +610,7 @@ def parse_in(input_filename):
 				try:
 					settings.frag2multi = int(line.split()[-1])
 					break
-				except IndexError:
+				except (IndexError,ValueError) as error:
 					break
 	input_object.seek(0)
 	input_file = (line for line in input_object) # make generator	
@@ -500,7 +621,7 @@ def parse_in(input_filename):
 				try:
 					settings.frag2energy = float(line.split()[-1])
 					break
-				except IndexError:
+				except (IndexError,ValueError) as error:
 					break				
 	input_object.seek(0)
 	input_file = (line for line in input_object) # make generator	
@@ -513,17 +634,18 @@ def parse_in(input_filename):
 					break
 				except IndexError:
 					break
-	if settings.frag2atoms[0] == '':
+	settings.frag2atoms = [int(x) for x in settings.frag2atoms if isInt(x)]
+	if len(settings.frag2atoms) == 0:
 		settings.frag2atoms  = "auto"
 	#Determine fragment atoms if not set
 	if settings.frag1atoms == "auto" and settings.frag2atoms == "auto":
 		settings = auto_frag(structures,settings)
 	elif settings.frag1atoms == "auto":	
-		settings.frag2atoms = list(range(1,len(structures.atoms)+1))
-		settings.frag2atoms = [item for item in settings.frag2atoms if item not in set(settings.frag1atoms)]
-	elif settings.frag2atoms == "auto":	
 		settings.frag1atoms = list(range(1,len(structures.atoms)+1))
-		settings.frag1atoms = [item for item in settings.frag1atoms if item not in set(settings.frag2atoms)]	
+		settings.frag1atoms = [item for item in settings.frag1atoms if item not in set(settings.frag2atoms)]
+	elif settings.frag2atoms == "auto":	
+		settings.frag2atoms = list(range(1,len(structures.atoms)+1))
+		settings.frag2atoms = [item for item in settings.frag2atoms if item not in set(settings.frag1atoms)]	
 	check_fragments(settings,structures) #checks if atom lists are coherent
 	#get fragment xyz
 	structures.xyz_1 = []
@@ -565,7 +687,6 @@ def parse_in(input_filename):
 		for match in re.finditer(r'<distances>(.*?)</distances>', file_contents, re.IGNORECASE|re.DOTALL):
 			settings.geo_dist = match.group(1).strip().split('\n')
 			settings.geo_dist = [element.split() for element in settings.geo_dist]
-		
 		settings.geo_ang = []
 		with open(input_filename) as input_file:
 			file_contents = input_file.read() # reset generator
@@ -593,7 +714,9 @@ def parse_in(input_filename):
 		if settings.geo_ang[0] == []:
 			settings.geo_ang = []
 		if settings.geo_dih[0] == "":
-			settings.geo_dih = []	
+			settings.geo_dih = []
+		#eliminate problems with wrong inputs
+		settings = check_geo(structures, settings)
 #------------Get Further Setting
 	#keep xyz
 	input_object.seek(0)
@@ -745,7 +868,7 @@ def parse_in(input_filename):
 				else:
 					settings.prepareonly   = False
 				break							
-
+	
 				
 #------------Get Settings for running the application
 	input_object.seek(0)
@@ -783,5 +906,4 @@ def parse_in(input_filename):
 	for match in re.finditer(r'<run_job>(.*?)</run_job>', file_contents, re.IGNORECASE|re.DOTALL):
 		settings.submit_setting  = match.group(1).strip()
 
-	
 	return settings, structures
