@@ -5,18 +5,28 @@ import numpy as np
 import os, time
 
 def getSCF(file):
-	SCF = getG09SCF(file)
+	SCF = getmultiSCF(file)
+
 	return SCF
 
-def getG09SCF(g09out):
+def getmultiSCF(g09out):
 	out = open(g09out, "r")
 	SCFenergy = 0.00
 	out.seek(0) #returns to top of .log file
 	out = reversed(list(out)) # reverse list to read from back to find last SCF optimization
 	for line in out:
-		if "SCF Done" in line:
+		if "SCF Done" in line: # Gaussian
 			SCFenergy = line.split()[4]
 			break
+		elif "FINAL SINGLE POINT ENERGY" in line: # Orca
+			SCFenergy = line.split()[4]
+			break
+		elif "Total energy in the final basis set" in line: # Qchem
+			SCFenergy = line.split()[8]
+			break
+		elif "Total DFT energy" in line: # NWChem, but only for DFT
+			SCFenergy = line.split()[4]
+			break	
 	#check if it is indeed a float
 	try:
 		SCFenergy = float(SCFenergy)
@@ -161,7 +171,7 @@ def create_analysis_file(settings):
 
 def analysis(settings, structures, x):
 	analysis_file = open(settings.name+'_DIA.txt', 'a')
-	irc_SCF = getSCF(settings.name+'_output/irc_{0:04d}.'.format(x+1)+settings.output_file_extension)
+	irc_SCF = getSCF(settings.name+'_output/complex_{0:04d}.'.format(x+1)+settings.output_file_extension)
 	fragment1_SCF = getSCF(settings.name+'_output/'+settings.frag1name+'_{0:04d}.'.format(x+1)+settings.output_file_extension)
 	fragment2_SCF = getSCF(settings.name+'_output/'+settings.frag2name+'_{0:04d}.'.format(x+1)+settings.output_file_extension)
 

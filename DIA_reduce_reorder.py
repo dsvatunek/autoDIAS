@@ -100,6 +100,6 @@ def reduce(structures, settings):
 			del structures.xyz_1[i+1]
 			del structures.xyz_2[i+1]
 	log = open(settings.logfile, 'a')
-	log.write("Reduced structures by {0} ({1:.0f}%)!\n".format(count, count/(len(structures.xyz)+count)*100))
+	log.write("Reduced structures by {0} ({1:.0f}%)!\n".format(count, float(count)/(len(structures.xyz)+count)*100))
 	log.close()
 	return structures

@@ -291,7 +291,7 @@ def check_fragments(settings,structures):
 	return
 
 def check_geo(structures, settings):
-	natoms = len(structures.xyz)
+	natoms = len(structures.xyz[0])
 	i = 0
 	while i < len(settings.geo_dist): #check if every bond has two elements
 		if len(settings.geo_dist[i]) != 2:
@@ -443,7 +443,7 @@ def structures_from_xyz(file):
 			pass			
 	return structures
 
-def parse_in(input_filename):
+def parse_in(input_filename, analysisonly):
 	class settings:
 		pass
 	settings.void = []
@@ -471,10 +471,16 @@ def parse_in(input_filename):
 					break
 				except IndexError:
 					break
-#------------Set Logfilename				
-	settings.logfile= settings.name + "_log.txt"
-	f= open(settings.logfile, 'w')
-	f.close()
+#------------Set Logfilename
+	if analysisonly:
+		settings.logfile= settings.name + "_analysisonly_log.txt"
+		f= open(settings.logfile, 'w')
+		f.close()
+	
+	else:	
+		settings.logfile= settings.name + "_log.txt"
+		f= open(settings.logfile, 'w')
+		f.close()
 #------------Parse Structures
 	#find out what kind of file we are dealing with. See if it's a gaussian file
 	structure_object = open(settings.ircfile, 'r')

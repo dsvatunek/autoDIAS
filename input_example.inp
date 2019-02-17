@@ -40,8 +40,6 @@ Information for Analysis
 # Analysis can be turned on (YES) or off (NO), default is YES
 Analysis = YES
 
-
-
 # Distances can be extracted. Use atom numbers to define distances. Use one line per atom pair
 # write "auto" in line to attempt finding a total of two bonds that get formed or broken.
 <distances>
@@ -73,7 +71,7 @@ reorder = NO
 Reduce structures = NO
 RMSD treshold = 0.2
 
-# Does only prepare input files but does not run them, does not do analysis (use -a flag for analysis only
+#Does only prepare input files but does not run them, does not do analysis (use -a flag for analysis only)
 Prepare only = NO
 
 
@@ -93,6 +91,7 @@ Input File Structure
 
 Title
 
+$charge $multiplicity
 $coordinates
 
 

@@ -1,11 +1,12 @@
 #!/usr/bin/env python 
 
-"""
+banner="""
 *****************************************************************************************
                                     autoDIA
 								Dennis Svatunek
 								    UCLA
 							d.svatunek@chem.ucla.com
+							    @clickchemist
 							
 						Download the newest version from:
 					   https://github.com/dsvatunek/autoDIA
@@ -13,7 +14,8 @@
 					   Please cite:
 *****************************************************************************************				   
 
-Python wrapper for Gaussian to automatically perform Distortion/Interaction analysis calculations (also know as Activation Strain Analysis).
+Python wrapper for several computational chemistry software packages to automatically perform 
+Distortion/Interaction analysis calculations (also know as Activation Strain Analysis).
 
 Further reading:
 
@@ -24,7 +26,7 @@ from DIA_analysis import *
 from DIA_reduce_reorder import *
 import argparse, sys, time, subprocess, os, datetime, copy
 
-__version__= ' '
+__version__= '0.9'
 
 #Python2 compatibility
 try:
@@ -97,7 +99,7 @@ def main():
 	overallstarttime=time.time()	
 #-------------------------------------Parse Settings and Inputs----------------------
 	starttime=time.time() # start timing for input parsing
-	settings, structures = parse_in(args.inp_file)
+	settings, structures = parse_in(args.inp_file,args.analysis)
 	#analysis only run analysis only and then stop
 	if args.analysis:
 		endtime=time.time()
@@ -118,6 +120,7 @@ def main():
 	milliseconds=float('0.'+totaltime.split('.')[1])*1000
 	
 	log = open(settings.logfile, 'a')
+	log.write(banner)
 	try: #python2.6
 		hostname = subprocess.check_output(['hostname']).decode('utf-8')
 		username = subprocess.check_output(['whoami']).decode('utf-8')
@@ -212,7 +215,7 @@ def main():
 	log.close()	
 	
 #-------------------------------------Run jobs-----------------------------------------
-	if settings.analysis:
+	if settings.analysis and not settings.prepareonly:
 		create_analysis_file(settings)
 	log = open(settings.logfile, 'a')
 	
