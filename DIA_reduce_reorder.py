@@ -72,20 +72,20 @@ def reorder(structures):
 		
 		if rmsd1 < rmsd2 and rmsd1 < rmsd3 and rmsd1 < rmsd4:
 			structures.xyz = structures.xyz[cut::-1]+structures.xyz[cut+1:]
-			structures.xyz = structures.xyz_1[cut::-1]+structures.xyz_1[cut+1:]
-			structures.xyz = structures.xyz_2[cut::-1]+structures.xyz_2[cut+1:]
+			structures.xyz_1 = structures.xyz_1[cut::-1]+structures.xyz_1[cut+1:]
+			structures.xyz_2 = structures.xyz_2[cut::-1]+structures.xyz_2[cut+1:]
 			structures.title = structures.title[cut::-1]+structures.title[cut+1:]
 		elif rmsd2 < rmsd1 and rmsd2 < rmsd3 and rmsd2 < rmsd4:
 			pass		
 		elif rmsd3 < rmsd1 and rmsd3 < rmsd2 and rmsd3 < rmsd4:
 			structures.xyz = structures.xyz[cut::-1]+structures.xyz[:cut:-1]
-			structures.xyz = structures.xyz_1[cut::-1]+structures.xyz_1[:cut:-1]
-			structures.xyz = structures.xyz_2[cut::-1]+structures.xyz_2[:cut:-1]
+			structures.xyz_1 = structures.xyz_1[cut::-1]+structures.xyz_1[:cut:-1]
+			structures.xyz_2 = structures.xyz_2[cut::-1]+structures.xyz_2[:cut:-1]
 			structures.title = structures.title[cut::-1]+structures.title[:cut:-1]
 		elif rmsd4 < rmsd1 and rmsd4 < rmsd2 and rmsd4 < rmsd3:
 			structures.xyz = structures.xyz[:cut+1]+structures.xyz[:cut:-1]
-			structures.xyz = structures.xyz_1[:cut+1]+structures.xyz_1[:cut:-1]
-			structures.xyz = structures.xyz_2[:cut+1]+structures.xyz_2[:cut:-1]
+			structures.xyz_1 = structures.xyz_1[:cut+1]+structures.xyz_1[:cut:-1]
+			structures.xyz_2 = structures.xyz_2[:cut+1]+structures.xyz_2[:cut:-1]
 			structures.title = structures.title[:cut+1]+structures.title[:cut:-1]
 		else:
 			pass
