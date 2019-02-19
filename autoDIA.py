@@ -26,7 +26,9 @@ from DIA_analysis import *
 from DIA_reduce_reorder import *
 import argparse, sys, time, subprocess, os, datetime, copy
 
-__version__= '1.0'
+__version__= '1.0.0'
+__author__= 'Dennis Svatunek'
+__email__ = "d.svatunek@chem.ucla.edu"
 
 #Python2 compatibility
 try:
