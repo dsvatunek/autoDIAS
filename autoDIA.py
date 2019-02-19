@@ -2,7 +2,7 @@
 
 banner="""
 *****************************************************************************************
-                                    autoDIA
+                                   autoDIA
 								Dennis Svatunek
 								    UCLA
 							d.svatunek@chem.ucla.com
@@ -17,7 +17,7 @@ banner="""
 Python wrapper for several computational chemistry software packages to automatically perform 
 Distortion/Interaction analysis calculations (also know as Activation Strain Analysis).
 
-Further reading:
+
 
 """
 
@@ -26,7 +26,7 @@ from DIA_analysis import *
 from DIA_reduce_reorder import *
 import argparse, sys, time, subprocess, os, datetime, copy
 
-__version__= '0.9'
+__version__= '1.0'
 
 #Python2 compatibility
 try:

@@ -294,23 +294,23 @@ def check_fragments(settings,structures):
 	for x in settings.frag1atoms:
 		if int(x) > len(structures.atoms):
 			line_prepender(settings.logfile, "CRITICAL ERROR: an atom number in fragment 1 is higher than the highest atom number!\n\n")
-			sys.exit("2")
+			sys.exit("CRITICAL ERROR: an atom number in fragment 1 is higher than the highest atom number!")
 	for x in settings.frag2atoms:
 		if int(x) > len(structures.atoms):
 			line_prepender(settings.logfile, "CRITICAL ERROR: an atom number in fragment 2 is higher than the highest atom number!\n\n")
-			sys.exit("3")
+			sys.exit("CRITICAL ERROR: an atom number in fragment 2 is higher than the highest atom number!")
 	if len(settings.frag1atoms) + len(settings.frag2atoms) != len(structures.atoms):
 		line_prepender(settings.logfile, "CRITICAL ERROR: number of specified fragment atoms does not equal total number of atoms!\n\n")
-		sys.exit("1")
+		sys.exit("CRITICAL ERROR: number of specified fragment atoms does not equal total number of atoms!")
 	if duplicates(settings.frag1atoms):
 		line_prepender(settings.logfile, "CRITICAL ERROR: at least one atom was defined more than once in fragment1!\n\n")
-		sys.exit("4")
+		sys.exit("CRITICAL ERROR: at least one atom was defined more than once in fragment1!")
 	if duplicates(settings.frag2atoms):
 		line_prepender(settings.logfile, "CRITICAL ERROR: at least one atom was defined more than once in fragment2!\n\n")
-		sys.exit("5")	
+		sys.exit("CRITICAL ERROR: at least one atom was defined more than once in fragment2!")	
 	elif len(set(settings.frag1atoms) & set(settings.frag2atoms)) > 0: 
 		line_prepender(settings.logfile, "CRITICAL ERROR: at least one atom was defined in both fragments!\n\n")
-		sys.exit("6")	
+		sys.exit("CRITICAL ERROR: at least one atom was defined in both fragments!")	
 	return
 
 def check_geo(structures, settings):
@@ -480,8 +480,7 @@ def parse_in(input_filename, analysisonly):
 				settings.ircfile = line.split()[-1]
 				break
 	else: #information on input file type is missing
-		print('Error:\t\tNo information on the structure input file could be found')
-		sys.exit("7")	
+		sys.exit("No information on the structure input file could be found!")	
 #------------GET JOBNAME
 	input_object.seek(0)
 	input_file = (line for line in input_object) # make generator
@@ -499,7 +498,6 @@ def parse_in(input_filename, analysisonly):
 		settings.logfile= settings.name + "_analysisonly_log.txt"
 		f= open(settings.logfile, 'w')
 		f.close()
-	
 	else:	
 		settings.logfile= settings.name + "_log.txt"
 		f= open(settings.logfile, 'w')
@@ -904,9 +902,7 @@ def parse_in(input_filename, analysisonly):
 					settings.prepareonly   = False
 				else:
 					settings.prepareonly   = False
-				break							
-	
-				
+				break								
 #------------Get Settings for running the application
 	input_object.seek(0)
 	input_file = (line for line in input_object) # reset generator
