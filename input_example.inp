@@ -1,28 +1,33 @@
-# Example input
+#--------------------------------------------------
+Example input file
+#--------------------------------------------------
 
-# relative or absolute path to file with structures. Can be xyz file or G09 output from IRC or geometry opt calculation
+# relative or absolute path to file with structures. Can be xyz file or G09 output from IRC, Scan, single point, frequency or geometry opt calculation
+
 Input file = test.xyz
 
-# Job name can be defined
+# Define a job name. Default is the input file name without file extension
+
 Job name = test
 
 #--------------------------------------------------
 Information on Structures
 #--------------------------------------------------
 
-# Charge and multiplicity of the whole system. Needs to be set for xyz files. Optional for G09 input, remove line or leave blank. 
+# Charge and multiplicity of the complex. Needs to be set for xyz files. Optional for G09 input 
+
 charge = 0
 multiplicity = 1
 
 # Fragment information
-# Provide fragment atoms as space or comma separated list of atom numbers
-# set either Fragment1 or Fragment2 atom list to auto or leave blank if the second fragment atoms should be determined automatically
-# set both fragment atom lists to auto or leave blank to attempt automatic fragment detection
-
+# fragment name, default is fragment1 or fragment2.
 Fragment1 name = Fragment1
+# fragment charge and multiplicity have to be provided. Default is charge 0 and multiplicity of 1
 Fragment1 charge = 0
 Fragment1 multiplicity = 1
+# list of the atoms in this fragment, provide a comma or space separated list, leave empty for automatic determination. If atom lists for both fragments are empty, then fragment 1 will contain the fragment containing atom 1
 Fragment1 atoms = 
+# Electronic energy of this fragment, required for calculation of relative energy of the complex and distortion energies. Defaults to 0.
 Fragment1 energy = -243.485731
 
 Fragment2 name = Fragment2
@@ -31,23 +36,23 @@ Fragment2 multiplicity = 1
 Fragment2 atoms = 
 Fragment2 energy = -464.752500
 
-
 #--------------------------------------------------
 Information for Analysis
 #--------------------------------------------------
 
-# Analysis does only work if Gaussian is used
 # Analysis can be turned on (YES) or off (NO), default is YES
 Analysis = YES
 
 # Distances can be extracted. Use atom numbers to define distances. Use one line per atom pair
 # write "auto" in line to attempt finding a total of two bonds that get formed or broken.
 <distances>
+1 2
+auto
 </distances>
 
 # Angles can be extracted. Use atom numbers to define angles. Use one line per angle
 <angles>
- 
+1 2 3
 </angles>
 
 # Dihedral angles can be extracted. Use atom numbers to define angles. Use one line per angle
@@ -59,12 +64,16 @@ Analysis = YES
 Further Settings
 #--------------------------------------------------
 
+# If set to YES autoDIA produces XYZ files of all complex and fragment structures and saves them in a folder called <jobname>_xyz
 Keep xyz = YES
+# If set to YES autoDIA does not delete input files of all complex and fragment structures in folder called <jobname>_input
 Keep input files = YES
+# If set to YES autoDIA does not delete output files of all complex and fragment structures in folder called <jobname>_output
 Keep output files = YES
+# If set to YES autoDIA does not delete the log file called <jobname>_log.txt after successful termination
 Keep log file = YES
 
-#Reordering of IRC structures
+#Set if structures should be reordered
 reorder = NO
 
 #Eliminate very similar structures based on a certain RMSD treshold
@@ -74,15 +83,14 @@ RMSD treshold = 0.2
 #Does only prepare input files but does not run them, does not do analysis (use -a flag for analysis only)
 Prepare only = NO
 
-
 #--------------------------------------------------
 Input File Structure
 #--------------------------------------------------
-# Input file structure
-# please provide the settings for single point calculations
+
+# Input file structure for the chosen driver
+# provide the settings for single point calculations
 # use $filename and $coordinates $charge and $multiplicity in places where they are required
 # Keep in mind the correct number of blank lines
-
 
 <layout>
 %mem=32GB
@@ -100,12 +108,14 @@ $coordinates
 #--------------------------------------------------
 Input File Structure
 #--------------------------------------------------
-# please provide correct command to run the desired Software (e.g. Gaussian)
+# provide the correct command to run the desired Software (e.g. Gaussian) on your system
 # use $input and if needed $output for input and output file name
 
 <run_job>
 g09 $input $output
 </run_job>
 
+# Option to set the input file extension, some software might require a specific one. Defaults to com
 input file extension = com
+# Option to set the output file extension, some software might require a specific one. Defaults to log
 output file extension = log
