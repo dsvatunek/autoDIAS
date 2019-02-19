@@ -113,7 +113,7 @@ def getFragments(structure, atoms):
 			#....add this list as new list in fragments
 			fragments = fragments + [adjacency_matrix[i]]
 	#now we got all of our fragments but some might belong to the same structure, so we need to test if we need to combine them, then combine them, 
-	#then check again and so on until nothing else changes, iterative process. Take length of fragments for that since it converged if amount of fragments doesn't changes
+	#then check again and so on until nothing else changes. iterative process. Take length of fragments for that since it converged if amount of fragments doesn't changes
 	n_frag_old=len(fragments)
 	#set j to some value that cannot be the length of fragments
 	n_frag_new=-5
@@ -193,11 +193,34 @@ def auto_frag(structures,settings):
 	n_fragments = []
 	for i in range(0,len(list_of_fragments)):
 		n_fragments = n_fragments + [len(list_of_fragments[i])]
-	indices = [i for i, x in enumerate(n_fragments) if x == 2]
-	counts = [list_of_fragments.count(list_of_fragments[x]) for x in indices]
-	fragments = list_of_fragments[indices[counts.index(max(counts))]]
-	settings.frag1atoms = np.sort(fragments[0])
-	settings.frag2atoms = np.sort(fragments[1])
+	#this part determines if there is at least one structure with 2 fragments and at least one with more than 2
+	twofrag = False
+	morefrag = False
+	for element in n_fragments:
+		if element == 2:
+			twofrag = True
+			break
+		if element > 2:
+			morefrag = True
+	if twofrag:
+		indices = [i for i, x in enumerate(n_fragments) if x == 2]
+		counts = [list_of_fragments.count(list_of_fragments[x]) for x in indices]
+		fragments = list_of_fragments[indices[counts.index(max(counts))]]
+		settings.frag1atoms = np.sort(fragments[0])
+		settings.frag2atoms = np.sort(fragments[1])
+		print(fragments)
+	elif morefrag:
+		n_fragments = [x for x in n_fragments if x > 2]
+		indices = [i for i, x in enumerate(n_fragments) if x == min(n_fragments)]
+		counts = [list_of_fragments.count(list_of_fragments[x]) for x in indices]
+		fragments = list_of_fragments[indices[counts.index(max(counts))]]
+		settings.frag1atoms = np.sort(fragments[0])
+		# now combine all other fragments into one
+		settings.frag2atoms = np.sort([j for i in fragments[1:] for j in i])
+		
+	else:
+		line_prepender(settings.logfile, "CRITICAL ERROR: couldn't determine fragments automatically!\n\n")
+		sys.exit("2")
 	return settings
  
 def get_single(file):
