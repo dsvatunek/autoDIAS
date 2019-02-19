@@ -1,4 +1,4 @@
-# auto-DIA
+# autoDIA
 
 ## a python tool for an automated Distortion Interaction Analysis
 
