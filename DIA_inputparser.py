@@ -217,10 +217,10 @@ def auto_frag(structures,settings):
 		settings.frag1atoms = np.sort(fragments[0])
 		# now combine all other fragments into one
 		settings.frag2atoms = np.sort([j for i in fragments[1:] for j in i])
-		
+		line_prepender(settings.logfile, "WARNING: more than two fragments detected! Check fragments!\n\n")
 	else:
 		line_prepender(settings.logfile, "CRITICAL ERROR: couldn't determine fragments automatically!\n\n")
-		sys.exit("2")
+		sys.exit("CRITICAL ERROR: couldn't determine fragments automatically!")
 	return settings
  
 def get_single(file):
@@ -506,7 +506,11 @@ def parse_in(input_filename, analysisonly):
 		f.close()
 #------------Parse Structures
 	#find out what kind of file we are dealing with. See if it's a gaussian file
-	structure_object = open(settings.ircfile, 'r')
+	try:
+		structure_object = open(settings.ircfile, 'r')
+	except FileNotFoundError:
+		line_prepender(settings.logfile, "CRITICAL ERROR: structure input file {0} not found!\n\n".format(settings.ircfile))
+		sys.exit("CRITICAL ERROR: structure input file {0} not found!".format(settings.ircfile))		
 	structure_object.seek(0)
 	structure_file = (line for line in structure_object) # make generator
 	settings.filetype="X"
@@ -515,7 +519,11 @@ def parse_in(input_filename, analysisonly):
 			settings.filetype="G"
 			break
 	if settings.filetype == "X":
-		structures = structures_from_xyz(settings.ircfile)
+		try:
+			structures = structures_from_xyz(settings.ircfile)
+		except StopIteration:
+			line_prepender(settings.logfile, "CRITICAL ERROR: problem reading structures from file {}!\n\n".format(settings.ircfile))
+			sys.exit("CRITICAL ERROR: problem reading structures from file {}!".format(settings.ircfile))	
 	else:
 		structures, settings = structures_from_G(settings.ircfile, settings)
 #------------Get Information on Fragments/determine automatically
