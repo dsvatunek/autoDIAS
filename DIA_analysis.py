@@ -18,6 +18,9 @@ def getmultiSCF(g09out):
 		if "SCF Done" in line: # Gaussian
 			SCFenergy = line.split()[4]
 			break
+		if "Energy=" in line: # Gaussian Force Field
+			SCFenergy = line.split()[3]
+			break
 		elif "FINAL SINGLE POINT ENERGY" in line: # Orca
 			SCFenergy = line.split()[4]
 			break
