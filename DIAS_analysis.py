@@ -66,7 +66,7 @@ def getDihedral(p0, p1, p2, p3):
 
 def create_analysis_file(settings):
 
-	analysis_file = open(settings.name+'_DIA.txt', 'w')
+	analysis_file = open(settings.name+'_DIAS.txt', 'w')
 	analysis_file.write('{0:<15}'.format('Step'))
 	
 	try:
@@ -173,7 +173,7 @@ def create_analysis_file(settings):
 	return
 
 def analysis(settings, structures, x):
-	analysis_file = open(settings.name+'_DIA.txt', 'a')
+	analysis_file = open(settings.name+'_DIAS.txt', 'a')
 	irc_SCF = getSCF(settings.name+'_output/complex_{0:04d}.'.format(x+1)+settings.output_file_extension)
 	fragment1_SCF = getSCF(settings.name+'_output/'+settings.frag1name+'_{0:04d}.'.format(x+1)+settings.output_file_extension)
 	fragment2_SCF = getSCF(settings.name+'_output/'+settings.frag2name+'_{0:04d}.'.format(x+1)+settings.output_file_extension)
