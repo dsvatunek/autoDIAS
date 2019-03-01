@@ -2,28 +2,25 @@
 
 banner="""
 *****************************************************************************************
-                                   autoDIA
+                                   autoDIAS
 								Dennis Svatunek
 								    UCLA
 							d.svatunek@chem.ucla.com
 							    @clickchemist
 							
 						Download the newest version from:
-					   https://github.com/dsvatunek/autoDIA
+					   https://github.com/dsvatunek/autoDIAS
 					   
-					   Please cite:
 *****************************************************************************************				   
 
 Python wrapper for several computational chemistry software packages to automatically perform 
-Distortion/Interaction analysis calculations (also know as Activation Strain Analysis).
-
-
+Distortion/Interaction Activation Strain analysis calculations.
 
 """
 
-from DIA_inputparser import *
-from DIA_analysis import *
-from DIA_reduce_reorder import *
+from DIAS_inputparser import *
+from DIAS_analysis import *
+from DIAS_reduce_reorder import *
 import argparse, sys, time, subprocess, os, datetime, copy
 
 __version__= '1.0.0'
