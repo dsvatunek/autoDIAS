@@ -271,7 +271,6 @@ def main():
 	if settings.keeplog == False:
 		os.remove(settings.logfile)
 		
-		
 if __name__ == "__main__":
 	main()
 	
