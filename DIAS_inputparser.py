@@ -486,7 +486,7 @@ def parse_in(input_filename, analysisonly):
 	input_file = (line for line in input_object) # make generator
 	settings.name = "DIAS"
 	for line in input_file:
-		if len(line.split()) > 1:
+		if len(line.split()) > 2:
 			if line.split()[0].upper()+line.split()[1].upper() == "JOBNAME":
 				try:
 					settings.name = line.split()[-1]
