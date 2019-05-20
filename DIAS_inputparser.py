@@ -484,12 +484,12 @@ def parse_in(input_filename, analysisonly):
 #------------GET JOBNAME
 	input_object.seek(0)
 	input_file = (line for line in input_object) # make generator
-	settings.name = "DIAS"
+	settings.name = settings.ircfile
 	for line in input_file:
-		if len(line.split()) > 2:
+		if len(line.split()) > 3:
 			if line.split()[0].upper()+line.split()[1].upper() == "JOBNAME":
 				try:
-					settings.name = line.split()[-1]
+					settings.name = line.split()[3]
 					break
 				except IndexError:
 					break
