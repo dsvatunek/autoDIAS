@@ -208,7 +208,6 @@ def auto_frag(structures,settings):
 		fragments = list_of_fragments[indices[counts.index(max(counts))]]
 		settings.frag1atoms = np.sort(fragments[0])
 		settings.frag2atoms = np.sort(fragments[1])
-		print(fragments)
 	elif morefrag:
 		n_fragments = [x for x in n_fragments if x > 2]
 		indices = [i for i, x in enumerate(n_fragments) if x == min(n_fragments)]
@@ -734,6 +733,7 @@ def parse_in(input_filename, analysisonly):
 		for match in re.finditer(r'<dihedral>(.*?)</dihedral>', file_contents, re.IGNORECASE|re.DOTALL):
 			settings.geo_dih = match.group(1).strip().split('\n')
 			settings.geo_dih = [element.split() for element in settings.geo_dih]
+
 		#Automatic determination of formed, broken bonds if requested
 		if settings.geo_dist[0] == []:
 			settings.geo_dist = [["auto"]]
@@ -746,10 +746,12 @@ def parse_in(input_filename, analysisonly):
 				settings.geo_dist.append(auto_distances[1])
 				break
 		#eliminate problems with empty lists
-		if settings.geo_ang[0] == []:
-			settings.geo_ang = []
-		if settings.geo_dih[0] == "":
-			settings.geo_dih = []
+		if len(settings.geo_ang)>0:
+			if settings.geo_ang[0] == []:
+				settings.geo_ang = []
+		if len(settings.geo_dih)>0:
+			if settings.geo_dih[0] == "":
+				settings.geo_dih = []
 		#eliminate problems with wrong inputs
 		settings = check_geo(structures, settings)
 #------------Get Further Setting
