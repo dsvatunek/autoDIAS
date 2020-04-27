@@ -277,13 +277,16 @@ def get_irc(file):
 	structures.xyz.append(np.array([x.split()[3:] for x in raw_coordinates]))
 	structures.atoms = [x.split()[1] for x in raw_coordinates]
 	structures.atoms = [periodic_table[int(x)] for x in structures.atoms]
-	# find everything except the TS structure
-	regex = r'---------------------------------------------------------------------((?:(?!---------------------------------------------------------------------).)*?)---------------------------------------------------------------------(?:(?!---------------------------------------------------------------------).)*?Delta-x\ Convergence\ Met'
-	for match in re.finditer(regex, file_contents, re.IGNORECASE|re.DOTALL):
+	# find everything except the TS structure for normal run
+	regex2 = r'---------------------------------------------------------------------((?:(?!---------------------------------------------------------------------).)*?)---------------------------------------------------------------------(?:(?!---------------------------------------------------------------------).)*?Delta-x\ Convergence\ Met'
+	for match in re.finditer(regex2, file_contents, re.IGNORECASE|re.DOTALL):
 		raw_coordinates = match.group(1).strip().split("\n")
 		structures.xyz.append(np.array([x.split()[3:] for x in raw_coordinates]))
-		
-		
+	# find everything except the TS structure for #p
+	regex3 = r'(?:(CURRENT).+?)(?:---------------------------------------------------------------------)(?:.*?(---------------------------------------------------------------------))(.*?)(?:(---------------------------------------------------------------------))'	
+	for match in re.finditer(regex3, file_contents, re.DOTALL):
+		raw_coordinates = match.group(3).strip().split("\n")
+		structures.xyz.append(np.array([x.split()[2:] for x in raw_coordinates]))
 	for i in range(len(structures.xyz)):
 		structures.xyz[i] = structures.xyz[i].astype(float)	
 	structures.title = [str(x) for x in range(len(structures.xyz))]

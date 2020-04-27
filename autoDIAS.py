@@ -11,7 +11,7 @@ banner="""
 						Download the newest version from:
 					   https://github.com/dsvatunek/autoDIAS
 					   
-					 Please cite. DOI: 10.26434/chemrxiv.7789940
+					 Please cite. DOI: 10.1002/jcc.26023
 *****************************************************************************************				   
 
 Python wrapper for several computational chemistry software packages to automatically 
