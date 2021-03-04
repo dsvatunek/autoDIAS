@@ -236,8 +236,7 @@ def get_single(file):
 	else:
 		regex = r'\ ---------------------------------------------------------------------\n((?:(?!\ ---------------------------------------------------------------------\n).)*?)\ ---------------------------------------------------------------------\n(?:(?!\ ---------------------------------------------------------------------\n).)*?Rotational\ constants'
 		for match in re.finditer(regex, file_contents, re.IGNORECASE|re.DOTALL):	
-			raw_coordinates = match.group(1).strip().split("\n")
-		
+			raw_coordinates = match.group(1).strip().split("\n")	
 	structures.xyz.append(np.array([x.split()[3:] for x in raw_coordinates]))
 	structures.atoms = [x.split()[1] for x in raw_coordinates]
 	structures.atoms = [periodic_table[int(x)] for x in structures.atoms]
@@ -269,6 +268,21 @@ def get_irc(file):
 		file_contents = input_file.read() 
 	structures.xyz = []
 	structures.atoms = []
+    #check if solvent was used
+	if "scrf" in file_contents:
+		a =0 
+		regex = r'Z\n ---------------------------------------------------------------------\n(.*?)\n ---------------------------------------------------------------------\n'
+		for match in re.finditer(regex, file_contents, re.IGNORECASE|re.DOTALL):
+			raw_coordinates = match.group(1).strip().split("\n")
+			structures.xyz.append(np.array([x.split()[3:] for x in raw_coordinates]))
+			print(a)
+			a+=1
+		structures.atoms = [x.split()[1] for x in raw_coordinates]
+		structures.atoms = [periodic_table[int(x)] for x in structures.atoms]
+		for i in range(len(structures.xyz)):
+			structures.xyz[i] = structures.xyz[i].astype(float)	
+		structures.title = [str(x) for x in range(len(structures.xyz))]
+		return structures
 	# find TS structure, it's the first xyz structure available
 	regex = r'Z\n ---------------------------------------------------------------------\n(.*?)\n ---------------------------------------------------------------------\n'
 	for match in re.finditer(regex, file_contents, re.IGNORECASE|re.DOTALL):
